@@ -1,0 +1,89 @@
+// Schema Prisma per Neon (Postgres serverless)
+// Fase 1 (MVP): Patient, Measurement, ReferencePopulation, User
+// Le fasi successive aggiungeranno audit log e ruoli granulari.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL") // connection string Neon (pooled)
+  directUrl = env("DIRECT_URL") // connection string Neon diretta, per le migrazioni
+}
+
+enum Sex {
+  M
+  F
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  role      String   @default("operatore") // operatore | admin
+  createdAt DateTime @default(now())
+  patients  Patient[]
+}
+
+model Patient {
+  id           String        @id @default(cuid())
+  firstName    String
+  lastName     String
+  sex          Sex
+  birthDate    DateTime
+  clinicalNote String? // es. categoria clinica: IRC, oncologico, atleta, anziano...
+  createdBy    User          @relation(fields: [createdById], references: [id])
+  createdById  String
+  createdAt    DateTime      @default(now())
+  measurements Measurement[]
+
+  @@index([lastName, firstName])
+}
+
+model Measurement {
+  id                 String             @id @default(cuid())
+  patient            Patient            @relation(fields: [patientId], references: [id])
+  patientId          String
+  measuredAt         DateTime           @default(now())
+  heightCm           Float
+  weightKg           Float?
+  resistanceOhm      Float // R, dal dispositivo
+  reactanceOhm       Float // Xc, dal dispositivo
+  phaseAngleDevice   Float? // PA letto direttamente dal dispositivo
+  // Campi derivati, calcolati dal motore e salvati per audit/storico:
+  rH                 Float // R/H, Ohm/m
+  xcH                Float // Xc/H, Ohm/m
+  phaseAngleComputed Float // arctan(Xc/R) * 180/pi
+  referencePopulation ReferencePopulation @relation(fields: [referencePopulationId], references: [id])
+  referencePopulationId String
+  bivaPattern        String? // risultato della classificazione a 7 zone
+  notes              String?
+  createdAt          DateTime           @default(now())
+
+  @@index([patientId, measuredAt])
+}
+
+/// Una riga = un'ellisse di riferimento, da tabelle pubblicate e verificate.
+/// Nessun valore è precaricato di default: va inserito da fonte citata.
+model ReferencePopulation {
+  id               String        @id @default(cuid())
+  code             String        @unique // es. "PICCOLI_1995_M"
+  label            String // es. "Adulti generali maschi (Piccoli 1995)"
+  sex              Sex
+  category         String // generale | anziani | pediatrico | obesita | IRC-dialisi | oncologia | atleti
+  n                Int // numerosità campionaria dello studio originale
+  meanRH           Float // Ohm/m
+  sdRH             Float
+  meanXcH          Float // Ohm/m
+  sdXcH            Float
+  correlationR     Float
+  ageMin           Int?
+  ageMax           Int?
+  sourceCitation   String // citazione completa, es. "Piccoli A et al. Am J Clin Nutr. 1995;61:269-270"
+  sourceDOI        String?
+  pubmedVerified   Boolean       @default(false) // true solo se verificato con PMID
+  pubmedId         String? // PMID, se disponibile
+  addedAt          DateTime      @default(now())
+  measurements     Measurement[]
+}
