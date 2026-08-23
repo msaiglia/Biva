@@ -260,19 +260,61 @@ function GraphPanel({
   const ellipses = useMemo(() => [50, 75, 95].map((p) => toleranceEllipse(pop, p as 50 | 75 | 95)), [pop]);
   const classification = useMemo(() => classifyVector(vector, pop), [vector, pop]);
 
-  const W = 480;
-  const H = 380;
-  const padding = 54;
+  const W = 460;
+  const H = 440;
+  const padding = 56;
   const e95 = ellipses[2];
-  const rMin = pop.meanX - Math.max(e95.semiAxisMajor, e95.semiAxisMinor) * 1.3;
-  const rMax = pop.meanX + Math.max(e95.semiAxisMajor, e95.semiAxisMinor) * 1.3;
-  const yMin = pop.meanY - Math.max(e95.semiAxisMajor, e95.semiAxisMinor) * 1.3;
-  const yMax = pop.meanY + Math.max(e95.semiAxisMajor, e95.semiAxisMinor) * 1.3;
+
+  // Estensione reale dell'ellisse ruotata lungo ciascun asse (bounding box
+  // esatto, non un'approssimazione) — è la chiave per range degli assi
+  // proporzionati: R/H e Xc/H hanno naturalmente scale molto diverse
+  // (l'ellisse è ~6-7 volte più "lunga" lungo R/H che lungo Xc/H), esattamente
+  // come nei grafici Akern (Rz/H 100-600 vs Xc/H 10-60, rapporto ~10:1).
+  // Usare lo stesso range su entrambi gli assi è ciò che schiacciava l'ellisse.
+  const theta95 = (e95.rotationDeg * Math.PI) / 180;
+  const extentX = Math.sqrt(
+    e95.semiAxisMajor ** 2 * Math.cos(theta95) ** 2 + e95.semiAxisMinor ** 2 * Math.sin(theta95) ** 2
+  );
+  const extentY = Math.sqrt(
+    e95.semiAxisMajor ** 2 * Math.sin(theta95) ** 2 + e95.semiAxisMinor ** 2 * Math.cos(theta95) ** 2
+  );
+  const margin = 1.25;
+
+  let rMin = pop.meanX - extentX * margin;
+  let rMax = pop.meanX + extentX * margin;
+  let yMin = pop.meanY - extentY * margin;
+  let yMax = pop.meanY + extentY * margin;
+  // Se il vettore del paziente è un outlier fuori dall'ellisse al 95%,
+  // allargo il range per tenerlo comunque visibile.
+  if (vector.x < rMin) rMin = vector.x - extentX * 0.15;
+  if (vector.x > rMax) rMax = vector.x + extentX * 0.15;
+  if (vector.y < yMin) yMin = vector.y - extentY * 0.15;
+  if (vector.y > yMax) yMax = vector.y + extentY * 0.15;
 
   const sx = (x: number) => padding + ((x - rMin) / (rMax - rMin)) * (W - 2 * padding);
   const sy = (y: number) => H - padding - ((y - yMin) / (yMax - yMin)) * (H - 2 * padding);
-  const scaleX = (W - 2 * padding) / (rMax - rMin);
-  const scaleY = (H - 2 * padding) / (yMax - yMin);
+
+  // Campiono l'ellisse per punti (in coordinate dati, poi trasformati con
+  // sx/sy) invece di usare il transform="rotate()" nativo di SVG: quel
+  // trucco presuppone una scala uniforme fra i due assi, che qui NON
+  // abbiamo (scaleX ≠ scaleY per costruzione) — con punti campionati la
+  // forma resta geometricamente corretta qualunque sia il rapporto di scala.
+  function ellipsePath(e: typeof e95): string {
+    const th = (e.rotationDeg * Math.PI) / 180;
+    const cosT = Math.cos(th);
+    const sinT = Math.sin(th);
+    const n = 72;
+    let d = "";
+    for (let i = 0; i <= n; i++) {
+      const t = (i / n) * 2 * Math.PI;
+      const localX = e.semiAxisMajor * Math.cos(t);
+      const localY = e.semiAxisMinor * Math.sin(t);
+      const dataX = e.centerX + localX * cosT - localY * sinT;
+      const dataY = e.centerY + localX * sinT + localY * cosT;
+      d += (i === 0 ? "M" : "L") + sx(dataX).toFixed(2) + "," + sy(dataY).toFixed(2) + " ";
+    }
+    return d + "Z";
+  }
 
   const statusColor =
     classification.distanceFromCenter95 > 1
@@ -292,20 +334,16 @@ function GraphPanel({
         <svg width={W} height={H} style={{ background: "#fafaf8", border: "1px solid #eeece5", borderRadius: 3 }}>
           <line x1={padding} y1={H - padding} x2={W - padding} y2={H - padding} stroke="#c9c5b8" />
           <line x1={padding} y1={padding} x2={padding} y2={H - padding} stroke="#c9c5b8" />
-          <text x={W / 2} y={H - 16} fontSize="11" fill="#8a8578" textAnchor="middle">x ({unit})</text>
-          <text x={16} y={H / 2} fontSize="11" fill="#8a8578" textAnchor="middle" transform={`rotate(-90 16 ${H / 2})`}>y ({unit})</text>
+          <text x={W / 2} y={H - 18} fontSize="11" fill="#8a8578" textAnchor="middle">x ({unit})</text>
+          <text x={18} y={H / 2} fontSize="11" fill="#8a8578" textAnchor="middle" transform={`rotate(-90 18 ${H / 2})`}>y ({unit})</text>
 
           {ellipses.map((e, i) => (
-            <ellipse
+            <path
               key={e.percentile}
-              cx={sx(e.centerX)}
-              cy={sy(e.centerY)}
-              rx={e.semiAxisMajor * scaleX}
-              ry={e.semiAxisMinor * scaleY}
-              transform={`rotate(${-e.rotationDeg} ${sx(e.centerX)} ${sy(e.centerY)})`}
+              d={ellipsePath(e)}
               fill="none"
               stroke={i === 2 ? "#4a7ab5" : "#a8bcd8"}
-              strokeWidth={i === 2 ? 1.6 : 1}
+              strokeWidth={i === 2 ? 1.8 : 1.2}
               strokeDasharray={i < 2 ? "4 3" : "none"}
             />
           ))}
