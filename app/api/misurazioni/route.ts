@@ -11,6 +11,7 @@ export async function POST(req: Request) {
   const body = await req.json();
   const {
     patientId,
+    measuredAt,
     heightCm,
     weightKg,
     resistanceOhm,
@@ -51,6 +52,7 @@ export async function POST(req: Request) {
   const measurement = await prisma.measurement.create({
     data: {
       patientId,
+      measuredAt: measuredAt ? new Date(measuredAt) : new Date(),
       heightCm,
       weightKg: weightKg || null,
       resistanceOhm,

@@ -1,6 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
+import { signOut } from "next-auth/react";
+import Footer from "@/components/Footer";
 import {
   normalizeClassic,
   computeSpecificVector,
@@ -77,6 +80,7 @@ export default function MeasurementForm({
   const [sex, setSex] = useState<"M" | "F">((patient?.sex as "M" | "F") || "M");
   const [R, setR] = useState(500);
   const [Xc, setXc] = useState(55);
+  const [measuredAt, setMeasuredAt] = useState(() => new Date().toISOString().slice(0, 10));
   const [heightCm, setHeightCm] = useState(170);
   const [weightKg, setWeightKg] = useState<string>("");
   const [phaseAngleDevice, setPhaseAngleDevice] = useState<string>("");
@@ -149,6 +153,7 @@ export default function MeasurementForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           patientId: patient.id,
+          measuredAt,
           heightCm,
           weightKg: weightKg ? Number(weightKg) : undefined,
           resistanceOhm: R,
@@ -175,7 +180,19 @@ export default function MeasurementForm({
 
   return (
     <main style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 24px", color: "#2a2a28", fontFamily: "'IBM Plex Sans', -apple-system, sans-serif" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+      <div className="nav-bar" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, paddingBottom: 14, borderBottom: "1px solid #e5e2d8", flexWrap: "wrap", gap: 10 }}>
+        <div style={{ display: "flex", gap: 20, fontSize: 13, flexWrap: "wrap" }}>
+          <Link href="/pazienti" style={{ color: "#5a564c", textDecoration: "none" }}>Pazienti</Link>
+          <Link href="/misurazione" style={{ color: "#2a2a28", textDecoration: "none", fontWeight: 600 }}>Calcolatore</Link>
+          <Link href="/confronto" style={{ color: "#5a564c", textDecoration: "none" }}>Confronto</Link>
+          <Link href="/admin/popolazioni" style={{ color: "#5a564c", textDecoration: "none" }}>Popolazioni</Link>
+        </div>
+        <button onClick={() => signOut({ callbackUrl: "/login" })} style={{ background: "none", border: "1px solid #c9c5b8", borderRadius: 3, padding: "4px 10px", cursor: "pointer", fontSize: 12, color: "#5a564c" }}>
+          Esci
+        </button>
+      </div>
+
+      <div className="responsive-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
         <div>
           <div style={{ fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", color: "#8a8578", marginBottom: 6 }}>
             {patient ? `Misurazione per ${patient.lastName} ${patient.firstName}` : "Calcolatore — nessun paziente collegato"}
@@ -193,7 +210,7 @@ export default function MeasurementForm({
         )}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: 32, alignItems: "start" }}>
+      <div className="responsive-grid" style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: 32, alignItems: "start" }}>
         {/* --- Colonna sinistra: form --- */}
         <div>
           <Section title="Dati paziente">
@@ -212,6 +229,9 @@ export default function MeasurementForm({
           </Section>
 
           <Section title="Misurazione bioimpedenziometrica">
+            <FieldRow label="Data del rilevamento">
+              <input type="date" value={measuredAt} onChange={(e) => setMeasuredAt(e.target.value)} style={inputStyle} max={new Date().toISOString().slice(0, 10)} />
+            </FieldRow>
             <FieldRow label="Resistenza R (Ω)">
               <input type="number" value={R} onChange={(e) => setR(Number(e.target.value))} style={inputStyle} />
             </FieldRow>
@@ -317,6 +337,7 @@ export default function MeasurementForm({
           </div>
         </div>
       </div>
+      <Footer />
     </main>
   );
 }
@@ -520,7 +541,7 @@ function GraphPanel({
       </div>
 
       <div style={{ display: "flex", gap: 20, flexWrap: "wrap", marginTop: 12 }}>
-        <svg width={W} height={H} style={{ background: "#fafaf8", border: "1px solid #eeece5", borderRadius: 3 }}>
+        <svg viewBox={`0 0 ${W} ${H}`} className="responsive-svg" style={{ maxWidth: W, background: "#fafaf8", border: "1px solid #eeece5", borderRadius: 3 }}>
           <line x1={padding} y1={H - padding} x2={W - padding} y2={H - padding} stroke="#c9c5b8" />
           <line x1={padding} y1={padding} x2={padding} y2={H - padding} stroke="#c9c5b8" />
           <text x={W / 2} y={H - 18} fontSize="11" fill="#8a8578" textAnchor="middle">x ({unit})</text>

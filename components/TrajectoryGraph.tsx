@@ -55,7 +55,7 @@ export default function TrajectoryGraph({ population, points }: { population: Re
       <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 2 }}>Traiettoria del vettore nel tempo</div>
       <div style={{ fontSize: 12, color: "#8a8578", marginBottom: 12 }}>Ellisse: {population.label}</div>
 
-      <svg width={W} height={H} style={{ background: "#fafaf8", border: "1px solid #eeece5", borderRadius: 3 }}>
+      <svg viewBox={`0 0 ${W} ${H}`} className="responsive-svg" style={{ maxWidth: W, background: "#fafaf8", border: "1px solid #eeece5", borderRadius: 3 }}>
         <line x1={padding} y1={H - padding} x2={W - padding} y2={H - padding} stroke="#c9c5b8" />
         <line x1={padding} y1={padding} x2={padding} y2={H - padding} stroke="#c9c5b8" />
         <text x={W / 2} y={H - 18} fontSize="11" fill="#8a8578" textAnchor="middle">R/H (Ω/m)</text>

@@ -1,0 +1,55 @@
+/* Stili globali e regole responsive — BIVA Platform */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+/* SVG dei grafici: scalano fluidamente mantenendo le proporzioni,
+   invece di avere una larghezza fissa in pixel che sfora su schermi
+   piccoli (tablet, cellulare). */
+.responsive-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Tabelle: su schermi stretti permettono lo scroll orizzontale invece
+   di schiacciare le colonne o sforare dal contenitore. */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Layout a due colonne (form + grafico, elenco pazienti + grafico
+   confronto): passano a una colonna sola sotto i 900px. */
+@media (max-width: 900px) {
+  .responsive-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Sotto i 640px: riduce i margini generali delle pagine, pensati per
+   desktop, e fa impilare le barre di navigazione se necessario. */
+@media (max-width: 640px) {
+  main {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+  .nav-bar {
+    gap: 12px !important;
+  }
+  .responsive-header {
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+  .responsive-header > div:last-child {
+    text-align: left !important;
+  }
+  table {
+    font-size: 11px !important;
+  }
+}

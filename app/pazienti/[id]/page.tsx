@@ -59,7 +59,7 @@ export default async function PatientDetailPage({ params }: { params: Promise<{ 
     <main style={{ maxWidth: 900, margin: "0 auto", padding: "32px 24px", fontFamily: "'IBM Plex Sans', -apple-system, sans-serif", color: "#2a2a28" }}>
       <Link href="/pazienti" style={{ fontSize: 12, color: "#8a8578", textDecoration: "none" }}>← Pazienti</Link>
 
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", margin: "14px 0 24px" }}>
+      <div className="responsive-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", margin: "14px 0 24px", flexWrap: "wrap", gap: 12 }}>
         <div>
           <h1 style={{ fontSize: 24, margin: 0 }}>{patient.lastName} {patient.firstName}</h1>
           <div style={{ fontSize: 13, color: "#8a8578", marginTop: 4 }}>
@@ -90,6 +90,7 @@ export default async function PatientDetailPage({ params }: { params: Promise<{ 
           Nessuna misurazione ancora registrata per questo paziente.
         </div>
       ) : (
+        <div className="table-scroll">
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
           <thead>
             <tr style={{ borderBottom: "1px solid #e5e2d8", textAlign: "left" }}>
@@ -134,6 +135,7 @@ export default async function PatientDetailPage({ params }: { params: Promise<{ 
             ))}
           </tbody>
         </table>
+        </div>
       )}
       <Footer />
     </main>

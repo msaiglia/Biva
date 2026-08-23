@@ -29,7 +29,7 @@ export default function PatientListClient({ patients, userName }: { patients: Pa
     <main style={{ maxWidth: 900, margin: "0 auto", padding: "32px 24px", fontFamily: "'IBM Plex Sans', -apple-system, sans-serif", color: "#2a2a28" }}>
       <NavBar userName={userName} />
 
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+      <div className="responsive-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
         <div>
           <div style={{ fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", color: "#8a8578", marginBottom: 6 }}>
             Fase 2
@@ -48,6 +48,7 @@ export default function PatientListClient({ patients, userName }: { patients: Pa
           Nessun paziente ancora registrato.
         </div>
       ) : (
+        <div className="table-scroll">
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
           <thead>
             <tr style={{ borderBottom: "1px solid #e5e2d8", textAlign: "left" }}>
@@ -74,6 +75,7 @@ export default function PatientListClient({ patients, userName }: { patients: Pa
             ))}
           </tbody>
         </table>
+        </div>
       )}
       <Footer />
     </main>
@@ -109,7 +111,7 @@ function NewPatientForm({ onCreated }: { onCreated: () => void }) {
 
   return (
     <form onSubmit={handleSubmit} style={{ background: "#fff", border: "1px solid #e5e2d8", borderRadius: 4, padding: 20, marginBottom: 24 }}>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
+      <div className="responsive-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
         <Field label="Nome"><input required value={firstName} onChange={(e) => setFirstName(e.target.value)} style={inputStyle} /></Field>
         <Field label="Cognome"><input required value={lastName} onChange={(e) => setLastName(e.target.value)} style={inputStyle} /></Field>
         <Field label="Sesso">
@@ -133,8 +135,8 @@ function NewPatientForm({ onCreated }: { onCreated: () => void }) {
 
 function NavBar({ userName }: { userName: string }) {
   return (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, paddingBottom: 14, borderBottom: "1px solid #e5e2d8" }}>
-      <div style={{ display: "flex", gap: 20, fontSize: 13 }}>
+    <div className="nav-bar" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, paddingBottom: 14, borderBottom: "1px solid #e5e2d8", flexWrap: "wrap", gap: 10 }}>
+      <div style={{ display: "flex", gap: 20, fontSize: 13, flexWrap: "wrap" }}>
         <Link href="/pazienti" style={{ color: "#2a2a28", textDecoration: "none", fontWeight: 600 }}>Pazienti</Link>
         <Link href="/misurazione" style={{ color: "#5a564c", textDecoration: "none" }}>Calcolatore</Link>
         <Link href="/confronto" style={{ color: "#5a564c", textDecoration: "none" }}>Confronto</Link>

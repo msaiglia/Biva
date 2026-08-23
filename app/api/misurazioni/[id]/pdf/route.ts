@@ -3,7 +3,6 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { renderToBuffer } from "@react-pdf/renderer";
-import React from "react";
 import MeasurementReport from "@/lib/pdf/MeasurementReport";
 import { computeBodyComposition, type ReferencePopulation } from "@/lib/biva-engine";
 
@@ -47,7 +46,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     : null;
 
   const buffer = await renderToBuffer(
-    React.createElement(MeasurementReport, {
+    MeasurementReport({
       patient: {
         firstName: measurement.patient.firstName,
         lastName: measurement.patient.lastName,

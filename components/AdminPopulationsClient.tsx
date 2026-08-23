@@ -96,14 +96,14 @@ export default function AdminPopulationsClient({ initialPopulations }: { initial
 
   return (
     <main style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 24px", fontFamily: "'IBM Plex Sans', -apple-system, sans-serif", color: "#2a2a28" }}>
-      <div style={{ display: "flex", gap: 20, fontSize: 13, marginBottom: 24, paddingBottom: 14, borderBottom: "1px solid #e5e2d8" }}>
+      <div className="nav-bar" style={{ display: "flex", gap: 20, fontSize: 13, marginBottom: 24, paddingBottom: 14, borderBottom: "1px solid #e5e2d8", flexWrap: "wrap" }}>
         <Link href="/pazienti" style={{ color: "#5a564c", textDecoration: "none" }}>Pazienti</Link>
         <Link href="/misurazione" style={{ color: "#5a564c", textDecoration: "none" }}>Calcolatore</Link>
         <Link href="/confronto" style={{ color: "#5a564c", textDecoration: "none" }}>Confronto</Link>
         <Link href="/admin/popolazioni" style={{ color: "#2a2a28", textDecoration: "none", fontWeight: 600 }}>Popolazioni</Link>
       </div>
 
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+      <div className="responsive-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
         <div>
           <div style={{ fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", color: "#8a8578", marginBottom: 6 }}>Fase 3 — Admin</div>
           <h1 style={{ fontSize: 24, margin: 0 }}>Popolazioni di riferimento</h1>
@@ -114,7 +114,7 @@ export default function AdminPopulationsClient({ initialPopulations }: { initial
       {(editing || creating) && (
         <form onSubmit={handleSubmit} style={{ background: "#fff", border: "1px solid #e5e2d8", borderRadius: 4, padding: 20, marginBottom: 24 }}>
           <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 14 }}>{editing ? `Modifica: ${editing.label}` : "Nuova popolazione"}</div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+          <div className="responsive-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
             {!editing && (
               <Field label="Codice (univoco)"><input required value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} style={inputStyle} /></Field>
             )}
@@ -146,7 +146,7 @@ export default function AdminPopulationsClient({ initialPopulations }: { initial
           <div style={{ marginTop: 12 }}>
             <Field label="Citazione completa"><input required value={form.sourceCitation} onChange={(e) => setForm({ ...form, sourceCitation: e.target.value })} style={inputStyle} /></Field>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 12 }}>
+          <div className="responsive-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 12 }}>
             <Field label="DOI (opzionale)"><input value={form.sourceDOI} onChange={(e) => setForm({ ...form, sourceDOI: e.target.value })} style={inputStyle} /></Field>
             <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, marginTop: 20 }}>
               <input type="checkbox" checked={form.pubmedVerified} onChange={(e) => setForm({ ...form, pubmedVerified: e.target.checked })} />
@@ -161,6 +161,7 @@ export default function AdminPopulationsClient({ initialPopulations }: { initial
         </form>
       )}
 
+      <div className="table-scroll">
       <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
         <thead>
           <tr style={{ borderBottom: "1px solid #e5e2d8", textAlign: "left" }}>
@@ -192,6 +193,7 @@ export default function AdminPopulationsClient({ initialPopulations }: { initial
           ))}
         </tbody>
       </table>
+      </div>
 
       <Footer />
     </main>

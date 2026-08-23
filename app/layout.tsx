@@ -1,4 +1,5 @@
 import Providers from "@/components/Providers";
+import "./globals.css";
 
 export const metadata = {
   title: "BIVA Platform — Dott. Mauro Saiglia",
