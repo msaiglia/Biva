@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
+import Footer from "@/components/Footer";
 
 interface PatientDTO {
   id: string;
@@ -74,6 +75,7 @@ export default function PatientListClient({ patients, userName }: { patients: Pa
           </tbody>
         </table>
       )}
+      <Footer />
     </main>
   );
 }
@@ -135,6 +137,8 @@ function NavBar({ userName }: { userName: string }) {
       <div style={{ display: "flex", gap: 20, fontSize: 13 }}>
         <Link href="/pazienti" style={{ color: "#2a2a28", textDecoration: "none", fontWeight: 600 }}>Pazienti</Link>
         <Link href="/misurazione" style={{ color: "#5a564c", textDecoration: "none" }}>Calcolatore</Link>
+        <Link href="/confronto" style={{ color: "#5a564c", textDecoration: "none" }}>Confronto</Link>
+        <Link href="/admin/popolazioni" style={{ color: "#5a564c", textDecoration: "none" }}>Popolazioni</Link>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 12, color: "#8a8578" }}>
         <span>{userName}</span>

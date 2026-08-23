@@ -1,8 +1,8 @@
 import Providers from "@/components/Providers";
 
 export const metadata = {
-  title: "BIVA — Piattaforma di valutazione bioimpedenziometrica",
-  description: "Analisi vettoriale dell'impedenza bioelettrica (BIVA) per nutrizione clinica",
+  title: "BIVA Platform — Dott. Mauro Saiglia",
+  description: "Analisi vettoriale dell'impedenza bioelettrica (BIVA) per nutrizione clinica — sviluppata dal Dott. Mauro Saiglia",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

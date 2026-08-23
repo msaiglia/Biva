@@ -41,7 +41,8 @@ function LoginInner() {
       <div style={{ fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", color: "#8a8578", marginBottom: 6 }}>
         Piattaforma BIVA
       </div>
-      <h1 style={{ fontSize: 24, marginBottom: 20 }}>Accedi</h1>
+      <h1 style={{ fontSize: 24, marginBottom: 4 }}>Accedi</h1>
+      <div style={{ fontSize: 12, color: "#a39d8a", marginBottom: 20 }}>Dott. Mauro Saiglia</div>
 
       {justRegistered && (
         <div style={{ fontSize: 13, color: "#3d7a5c", marginBottom: 16, padding: "8px 12px", background: "#eaf5ee", borderRadius: 3 }}>

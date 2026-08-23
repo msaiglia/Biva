@@ -68,6 +68,7 @@ export default async function PatientDetailPage({ params }: { params: Promise<{ 
               <th style={th}>Angolo di fase</th>
               <th style={th}>Popolazione</th>
               <th style={th}>Pattern</th>
+              <th style={th}></th>
             </tr>
           </thead>
           <tbody>
@@ -92,6 +93,11 @@ export default async function PatientDetailPage({ params }: { params: Promise<{ 
                   >
                     {m.bivaPattern ? PATTERN_LABELS[m.bivaPattern] ?? m.bivaPattern : "—"}
                   </span>
+                </td>
+                <td style={{ ...td, textAlign: "right" }}>
+                  <a href={`/api/misurazioni/${m.id}/pdf`} target="_blank" rel="noreferrer" style={{ color: "#4a7ab5", textDecoration: "none", fontSize: 12 }}>
+                    PDF ↓
+                  </a>
                 </td>
               </tr>
             ))}
