@@ -314,6 +314,7 @@ function BodyCompositionPanel({
         />
         <BcRow label="Massa Magra (FFM)" value={`${bc.ffmKg.toFixed(1)} kg`} ref={formatRef(bc.ffmKg, "kg")} />
         <BcRow label="Massa Grassa (FM)" value={`${bc.fmKg.toFixed(1)} kg`} ref={formatRef(bc.fmKg, "kg")} />
+        <BcRow label="Massa Cellulare (BCM)" value={`${bc.bcmKg.toFixed(1)} kg`} ref={formatRef(bc.bcmKg, "kg")} />
       </div>
 
       <div style={{ fontSize: 11, color: "#8a8578", marginTop: 16, lineHeight: 1.6, borderTop: "1px solid #eeece5", paddingTop: 12 }}>

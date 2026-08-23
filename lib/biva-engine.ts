@@ -235,6 +235,21 @@ export interface BodyComposition {
   icwL: number;
   ecwToTbwPercent: number; // quota di TBW, non del peso corporeo
   icwToTbwPercent: number;
+  bcmKg: number;
+}
+
+/**
+ * Trasformazione da reattanza in configurazione serie (Xc, quella misurata
+ * direttamente dal dispositivo) a reattanza in configurazione parallela
+ * (Xcp), richiesta da alcune equazioni BCM. È un'identità circuitale
+ * standard (non specifica di uno studio), derivabile dall'ammettenza:
+ *   Y = 1/(R - jXc) = R/(R²+Xc²) + j·Xc/(R²+Xc²)  →  Xcp = (R²+Xc²)/Xc
+ * Discussa esplicitamente nella letteratura BIA (ESPEN Kyle et al. 2004,
+ * modelli serie vs parallelo) e usata da Kotler et al. (Am J Clin Nutr
+ * 1996;64:489S-497S) e Dittmar & Reber (v. sotto).
+ */
+function seriesToParallelReactance(R: number, Xc: number): number {
+  return (R * R + Xc * Xc) / Xc;
 }
 
 export function computeBodyComposition(
@@ -258,6 +273,18 @@ export function computeBodyComposition(
   const ecwL = tbwL * ECW_TBW_RATIO;
   const icwL = tbwL * (1 - ECW_TBW_RATIO);
 
+  // BCM (massa cellulare corporea) — Dittmar M, Reber H. "New equations
+  // for estimating body cell mass from bioimpedance parallel models in
+  // healthy older Germans." Am J Physiol Endocrinol Metab. 2001;281:E1005-14.
+  // (citata in ESPEN/Kyle et al. 2004, Tabella 6). Sviluppata in una
+  // popolazione anziana (60-90 anni): verificata in questa sessione contro
+  // 2 referti Akern reali con risultati DISOMOGENEI (scarto 0.3kg su un
+  // soggetto di 44 anni, 4.5kg su un soggetto di 55 anni) — applicare con
+  // cautela fuori dalla fascia d'età di sviluppo originale.
+  const xcp = seriesToParallelReactance(R, Xc);
+  const sexTerm = sex === "M" ? 1 : 0;
+  const bcmKg = 1.898 * (heightCm * heightCm / xcp) - 0.051 * weightKg + 4.18 * sexTerm + 15.496;
+
   return {
     tbwL,
     ffmKg,
@@ -266,6 +293,7 @@ export function computeBodyComposition(
     icwL,
     ecwToTbwPercent: ECW_TBW_RATIO * 100,
     icwToTbwPercent: (1 - ECW_TBW_RATIO) * 100,
+    bcmKg,
   };
 }
 
