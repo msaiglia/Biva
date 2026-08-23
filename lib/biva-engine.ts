@@ -161,8 +161,12 @@ export function toleranceEllipse(
     A * A - 4 * (n - 1) * (n - 1) * (1 - r * r) * sx2 * sy2;
   const sqrtDisc = Math.sqrt(Math.max(discriminant, 0));
 
-  const L1 = K * Math.sqrt(A + sqrtDisc);
-  const L2 = K * Math.sqrt(A - sqrtDisc);
+  // NOTA: la radice quadrata va sull'INTERO prodotto K*(...), non solo
+  // sulla parentesi interna — bug corretto dopo verifica numerica del
+  // comportamento asintotico al crescere di n (l'ellisse di tolleranza
+  // deve convergere a un valore costante, non tendere a zero).
+  const L1 = Math.sqrt(K * (A + sqrtDisc));
+  const L2 = Math.sqrt(K * (A - sqrtDisc));
 
   // Pendenza dell'asse principale (Eq. 2a)
   const term = (sy2 - sx2) / (2 * r * sx * sy);
@@ -200,8 +204,8 @@ export function confidenceEllipse(
     A * A - 4 * (n - 1) * (n - 1) * (1 - r * r) * sx2 * sy2;
   const sqrtDisc = Math.sqrt(Math.max(discriminant, 0));
 
-  const L1 = K * Math.sqrt(A + sqrtDisc);
-  const L2 = K * Math.sqrt(A - sqrtDisc);
+  const L1 = Math.sqrt(K * (A + sqrtDisc));
+  const L2 = Math.sqrt(K * (A - sqrtDisc));
   const term = (sy2 - sx2) / (2 * r * sx * sy);
   const b1 = term + Math.sqrt(1 + term * term);
   const rotationDeg = Math.atan(b1) * (180 / Math.PI);
@@ -251,8 +255,8 @@ export function toleranceEllipseZScore(
   const F = criticalFValueD1Eq2(alpha, m);
   const K = (F * (n + 1)) / (n * (n - 2));
 
-  const L1 = K * Math.sqrt(2 * (n - 1) + 2 * r * (n - 1));
-  const L2 = K * Math.sqrt(2 * (n - 1) - 2 * r * (n - 1));
+  const L1 = Math.sqrt(K * (2 * (n - 1) + 2 * r * (n - 1)));
+  const L2 = Math.sqrt(K * (2 * (n - 1) - 2 * r * (n - 1)));
 
   return {
     percentile,

@@ -1,13 +1,18 @@
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   let dbStatus: "ok" | "error" = "ok";
   let referencePopulationCount = 0;
+  let errorDetail = "";
 
   try {
     referencePopulationCount = await prisma.referencePopulation.count();
   } catch (e) {
     dbStatus = "error";
+    errorDetail = e instanceof Error ? e.message : String(e);
+    console.error("DB connection check failed:", errorDetail);
   }
 
   return (
@@ -37,7 +42,7 @@ export default async function HomePage() {
       <StatusRow
         label="Connessione database (Neon)"
         ok={dbStatus === "ok"}
-        detail={dbStatus === "ok" ? "connesso" : "non connesso — controlla DATABASE_URL"}
+        detail={dbStatus === "ok" ? "connesso" : `non connesso — ${errorDetail.slice(0, 300)}`}
       />
       <StatusRow
         label="Popolazioni di riferimento caricate"
