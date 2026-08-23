@@ -1,6 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import TrajectoryGraph from "@/components/TrajectoryGraph";
+import Footer from "@/components/Footer";
+import type { ReferencePopulation, BivaMethod } from "@/lib/biva-engine";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +33,28 @@ export default async function PatientDetailPage({ params }: { params: Promise<{ 
 
   const age = Math.floor((Date.now() - patient.birthDate.getTime()) / (365.25 * 24 * 3600 * 1000));
 
+  // Traiettoria: tutte le misurazioni in ordine cronologico, sull'ellisse
+  // della popolazione usata più di recente (contesto clinico "attuale").
+  const chronological = [...patient.measurements].reverse();
+  const mostRecentPop = patient.measurements[0]?.referencePopulation;
+  const trajectoryPoints = chronological.map((m) => ({ x: m.rH, y: m.xcH, date: m.measuredAt.toISOString() }));
+  const trajectoryPop: ReferencePopulation | null = mostRecentPop
+    ? {
+        code: mostRecentPop.code,
+        label: mostRecentPop.label,
+        sex: mostRecentPop.sex as "M" | "F",
+        method: mostRecentPop.method as BivaMethod,
+        n: mostRecentPop.n,
+        meanX: mostRecentPop.meanX,
+        sdX: mostRecentPop.sdX,
+        meanY: mostRecentPop.meanY,
+        sdY: mostRecentPop.sdY,
+        r: mostRecentPop.correlationR,
+        sourceCitation: mostRecentPop.sourceCitation,
+        pubmedVerified: mostRecentPop.pubmedVerified,
+      }
+    : null;
+
   return (
     <main style={{ maxWidth: 900, margin: "0 auto", padding: "32px 24px", fontFamily: "'IBM Plex Sans', -apple-system, sans-serif", color: "#2a2a28" }}>
       <Link href="/pazienti" style={{ fontSize: 12, color: "#8a8578", textDecoration: "none" }}>← Pazienti</Link>
@@ -49,6 +74,12 @@ export default async function PatientDetailPage({ params }: { params: Promise<{ 
           + Nuova misurazione
         </Link>
       </div>
+
+      {trajectoryPop && trajectoryPoints.length > 1 && (
+        <div style={{ marginBottom: 28 }}>
+          <TrajectoryGraph population={trajectoryPop} points={trajectoryPoints} />
+        </div>
+      )}
 
       <div style={{ fontSize: 11, letterSpacing: "0.05em", textTransform: "uppercase", color: "#8a8578", marginBottom: 10 }}>
         Storico misurazioni ({patient.measurements.length})
@@ -104,6 +135,7 @@ export default async function PatientDetailPage({ params }: { params: Promise<{ 
           </tbody>
         </table>
       )}
+      <Footer />
     </main>
   );
 }
