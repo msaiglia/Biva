@@ -82,8 +82,21 @@ export default function MeasurementForm({ populations }: { populations: Populati
   const [classicPopCode, setClassicPopCode] = useState<string>("");
   const [specificPopCode, setSpecificPopCode] = useState<string>("");
 
-  const activeClassicCode = classicPopCode || classicPops[0]?.code || "";
-  const activeSpecificCode = specificPopCode || specificPops[0]?.code || "";
+  // Preferenza di default: i riferimenti più aggiornati e con la
+  // numerosità campionaria maggiore, non il primo in ordine alfabetico.
+  const PREFERRED_CLASSIC = ["CAMPA_2023_M", "CAMPA_2023_F"];
+  const PREFERRED_SPECIFIC = [
+    "BUFFA_2013_SPECIFIC_US_M",
+    "IBANEZ_2015_SPECIFIC_YOUNG_ITES_F",
+  ];
+
+  function pickDefault(pops: PopulationDTO[], preferred: string[]): string {
+    const found = pops.find((p) => preferred.includes(p.code));
+    return found?.code ?? pops[0]?.code ?? "";
+  }
+
+  const activeClassicCode = classicPopCode || pickDefault(classicPops, PREFERRED_CLASSIC);
+  const activeSpecificCode = specificPopCode || pickDefault(specificPops, PREFERRED_SPECIFIC);
 
   const classicPopDTO = classicPops.find((p) => p.code === activeClassicCode);
   const specificPopDTO = specificPops.find((p) => p.code === activeSpecificCode);
@@ -342,13 +355,13 @@ function GraphPanel({
               key={e.percentile}
               d={ellipsePath(e)}
               fill="none"
-              stroke={i === 2 ? "#4a7ab5" : "#a8bcd8"}
-              strokeWidth={i === 2 ? 1.8 : 1.2}
+              stroke={["#3d7a5c", "#b8873a", "#b23a3a"][i]}
+              strokeWidth={i === 2 ? 1.8 : 1.3}
               strokeDasharray={i < 2 ? "4 3" : "none"}
             />
           ))}
 
-          <circle cx={sx(pop.meanX)} cy={sy(pop.meanY)} r={2.5} fill="#4a7ab5" />
+          <circle cx={sx(pop.meanX)} cy={sy(pop.meanY)} r={2.5} fill="#6b6558" />
           <line x1={sx(pop.meanX)} y1={sy(pop.meanY)} x2={sx(vector.x)} y2={sy(vector.y)} stroke={statusColor} strokeWidth={1.2} opacity={0.6} />
           <circle cx={sx(vector.x)} cy={sy(vector.y)} r={6} fill={statusColor} stroke="#fff" strokeWidth={2} />
         </svg>
