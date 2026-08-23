@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 export default async function MisurazionePage({
   searchParams,
 }: {
-  searchParams: Promise<{ pazienteId?: string }>;
+  searchParams: Promise<{ pazienteId?: string; misurazioneId?: string }>;
 }) {
   const params = await searchParams;
   let populations: Array<{
@@ -28,6 +28,19 @@ export default async function MisurazionePage({
   }> = [];
   let loadError = "";
   let patient: { id: string; firstName: string; lastName: string; sex: string } | null = null;
+  let existingMeasurement: {
+    id: string;
+    measuredAt: string;
+    heightCm: number;
+    weightKg: number | null;
+    resistanceOhm: number;
+    reactanceOhm: number;
+    phaseAngleDevice: number | null;
+    armCircumferenceCm: number | null;
+    waistCircumferenceCm: number | null;
+    calfCircumferenceCm: number | null;
+    referencePopulationId: string;
+  } | null = null;
 
   try {
     populations = await prisma.referencePopulation.findMany({
@@ -36,6 +49,24 @@ export default async function MisurazionePage({
     if (params.pazienteId) {
       const p = await prisma.patient.findUnique({ where: { id: params.pazienteId } });
       if (p) patient = { id: p.id, firstName: p.firstName, lastName: p.lastName, sex: p.sex };
+    }
+    if (params.misurazioneId) {
+      const m = await prisma.measurement.findUnique({ where: { id: params.misurazioneId } });
+      if (m) {
+        existingMeasurement = {
+          id: m.id,
+          measuredAt: m.measuredAt.toISOString().slice(0, 10),
+          heightCm: m.heightCm,
+          weightKg: m.weightKg,
+          resistanceOhm: m.resistanceOhm,
+          reactanceOhm: m.reactanceOhm,
+          phaseAngleDevice: m.phaseAngleDevice,
+          armCircumferenceCm: m.armCircumferenceCm,
+          waistCircumferenceCm: m.waistCircumferenceCm,
+          calfCircumferenceCm: m.calfCircumferenceCm,
+          referencePopulationId: m.referencePopulationId,
+        };
+      }
     }
   } catch (e) {
     loadError = e instanceof Error ? e.message : String(e);
@@ -62,5 +93,5 @@ export default async function MisurazionePage({
     );
   }
 
-  return <MeasurementForm populations={populations} patient={patient} />;
+  return <MeasurementForm populations={populations} patient={patient} existingMeasurement={existingMeasurement} />;
 }

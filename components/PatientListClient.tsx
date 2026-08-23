@@ -31,9 +31,6 @@ export default function PatientListClient({ patients, userName }: { patients: Pa
 
       <div className="responsive-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
         <div>
-          <div style={{ fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", color: "#8a8578", marginBottom: 6 }}>
-            Fase 2
-          </div>
           <h1 style={{ fontSize: 24, margin: 0 }}>Pazienti</h1>
         </div>
         <button onClick={() => setShowForm(!showForm)} style={primaryButton}>

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import Footer from "@/components/Footer";
 import {
@@ -70,24 +71,41 @@ interface PatientInfo {
   sex: string;
 }
 
+interface ExistingMeasurement {
+  id: string;
+  measuredAt: string;
+  heightCm: number;
+  weightKg: number | null;
+  resistanceOhm: number;
+  reactanceOhm: number;
+  phaseAngleDevice: number | null;
+  armCircumferenceCm: number | null;
+  waistCircumferenceCm: number | null;
+  calfCircumferenceCm: number | null;
+  referencePopulationId: string;
+}
+
 export default function MeasurementForm({
   populations,
   patient,
+  existingMeasurement,
 }: {
   populations: PopulationDTO[];
   patient?: PatientInfo | null;
+  existingMeasurement?: ExistingMeasurement | null;
 }) {
+  const isEditing = !!existingMeasurement;
   const [sex, setSex] = useState<"M" | "F">((patient?.sex as "M" | "F") || "M");
-  const [R, setR] = useState(500);
-  const [Xc, setXc] = useState(55);
-  const [measuredAt, setMeasuredAt] = useState(() => new Date().toISOString().slice(0, 10));
-  const [heightCm, setHeightCm] = useState(170);
-  const [weightKg, setWeightKg] = useState<string>("");
-  const [phaseAngleDevice, setPhaseAngleDevice] = useState<string>("");
-  const [showSpecific, setShowSpecific] = useState(false);
-  const [armCm, setArmCm] = useState<string>("");
-  const [waistCm, setWaistCm] = useState<string>("");
-  const [calfCm, setCalfCm] = useState<string>("");
+  const [R, setR] = useState(existingMeasurement?.resistanceOhm ?? 500);
+  const [Xc, setXc] = useState(existingMeasurement?.reactanceOhm ?? 55);
+  const [measuredAt, setMeasuredAt] = useState(existingMeasurement?.measuredAt ?? (() => new Date().toISOString().slice(0, 10))());
+  const [heightCm, setHeightCm] = useState(existingMeasurement?.heightCm ?? 170);
+  const [weightKg, setWeightKg] = useState<string>(existingMeasurement?.weightKg ? String(existingMeasurement.weightKg) : "");
+  const [phaseAngleDevice, setPhaseAngleDevice] = useState<string>(existingMeasurement?.phaseAngleDevice ? String(existingMeasurement.phaseAngleDevice) : "");
+  const [showSpecific, setShowSpecific] = useState(!!existingMeasurement?.armCircumferenceCm);
+  const [armCm, setArmCm] = useState<string>(existingMeasurement?.armCircumferenceCm ? String(existingMeasurement.armCircumferenceCm) : "");
+  const [waistCm, setWaistCm] = useState<string>(existingMeasurement?.waistCircumferenceCm ? String(existingMeasurement.waistCircumferenceCm) : "");
+  const [calfCm, setCalfCm] = useState<string>(existingMeasurement?.calfCircumferenceCm ? String(existingMeasurement.calfCircumferenceCm) : "");
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [saveError, setSaveError] = useState("");
 
@@ -100,7 +118,12 @@ export default function MeasurementForm({
     [populations, sex]
   );
 
-  const [classicPopCode, setClassicPopCode] = useState<string>("");
+  const [classicPopCode, setClassicPopCode] = useState<string>(() => {
+    if (existingMeasurement) {
+      return populations.find((p) => p.id === existingMeasurement.referencePopulationId)?.code || "";
+    }
+    return "";
+  });
   const [specificPopCode, setSpecificPopCode] = useState<string>("");
 
   // Preferenza di default: i riferimenti più aggiornati e con la
@@ -143,13 +166,17 @@ export default function MeasurementForm({
     [R, Xc, heightCm, armCm, waistCm, calfCm]
   );
 
+  const router = useRouter();
+
   async function handleSave() {
     if (!patient || !classicPopDTO) return;
     setSaveStatus("saving");
     setSaveError("");
     try {
-      const res = await fetch("/api/misurazioni", {
-        method: "POST",
+      const url = isEditing ? `/api/misurazioni/${existingMeasurement!.id}` : "/api/misurazioni";
+      const method = isEditing ? "PUT" : "POST";
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           patientId: patient.id,
@@ -172,6 +199,9 @@ export default function MeasurementForm({
         return;
       }
       setSaveStatus("saved");
+      if (isEditing) {
+        setTimeout(() => router.push(`/pazienti/${patient.id}`), 700);
+      }
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : String(e));
       setSaveStatus("error");
@@ -195,16 +225,18 @@ export default function MeasurementForm({
       <div className="responsive-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
         <div>
           <div style={{ fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", color: "#8a8578", marginBottom: 6 }}>
-            {patient ? `Misurazione per ${patient.lastName} ${patient.firstName}` : "Calcolatore — nessun paziente collegato"}
+            {patient
+              ? `${isEditing ? "Modifica misurazione" : "Misurazione"} per ${patient.lastName} ${patient.firstName}`
+              : "Calcolatore — nessun paziente collegato"}
           </div>
-          <h1 style={{ fontSize: 26, marginBottom: 28 }}>Misurazione BIVA</h1>
+          <h1 style={{ fontSize: 26, marginBottom: 28 }}>{isEditing ? "Modifica misurazione" : "Misurazione BIVA"}</h1>
         </div>
         {patient && (
           <div style={{ textAlign: "right" }}>
             <button onClick={handleSave} disabled={saveStatus === "saving"} style={saveButtonStyle}>
-              {saveStatus === "saving" ? "Salvataggio..." : "Salva misurazione"}
+              {saveStatus === "saving" ? "Salvataggio..." : isEditing ? "Salva modifiche" : "Salva misurazione"}
             </button>
-            {saveStatus === "saved" && <div style={{ fontSize: 12, color: "#3d7a5c", marginTop: 6 }}>✓ Salvata</div>}
+            {saveStatus === "saved" && <div style={{ fontSize: 12, color: "#3d7a5c", marginTop: 6 }}>✓ Salvata{isEditing ? ", torno alla scheda paziente..." : ""}</div>}
             {saveStatus === "error" && <div style={{ fontSize: 12, color: "#b23a3a", marginTop: 6 }}>{saveError}</div>}
           </div>
         )}

@@ -105,7 +105,6 @@ export default function AdminPopulationsClient({ initialPopulations }: { initial
 
       <div className="responsive-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
         <div>
-          <div style={{ fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", color: "#8a8578", marginBottom: 6 }}>Fase 3 — Admin</div>
           <h1 style={{ fontSize: 24, margin: 0 }}>Popolazioni di riferimento</h1>
         </div>
         <button onClick={startCreate} style={primaryButton}>+ Nuova popolazione</button>

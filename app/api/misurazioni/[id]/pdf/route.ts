@@ -45,30 +45,40 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       )
     : null;
 
-  const buffer = await renderToBuffer(
-    MeasurementReport({
-      patient: {
-        firstName: measurement.patient.firstName,
-        lastName: measurement.patient.lastName,
-        sex: measurement.patient.sex,
-        birthDate: measurement.patient.birthDate.toISOString(),
-        clinicalNote: measurement.patient.clinicalNote,
-      },
-      measurement: {
-        measuredAt: measurement.measuredAt.toISOString(),
-        heightCm: measurement.heightCm,
-        weightKg: measurement.weightKg,
-        resistanceOhm: measurement.resistanceOhm,
-        reactanceOhm: measurement.reactanceOhm,
-        phaseAngleComputed: measurement.phaseAngleComputed,
-        rH: measurement.rH,
-        xcH: measurement.xcH,
-        bivaPattern: measurement.bivaPattern,
-      },
-      population: enginePop,
-      bodyComposition,
-    }) as unknown as Parameters<typeof renderToBuffer>[0]
-  );
+  let buffer: Buffer;
+  try {
+    buffer = await renderToBuffer(
+      MeasurementReport({
+        patient: {
+          firstName: measurement.patient.firstName,
+          lastName: measurement.patient.lastName,
+          sex: measurement.patient.sex,
+          birthDate: measurement.patient.birthDate.toISOString(),
+          clinicalNote: measurement.patient.clinicalNote,
+        },
+        measurement: {
+          measuredAt: measurement.measuredAt.toISOString(),
+          heightCm: measurement.heightCm,
+          weightKg: measurement.weightKg,
+          resistanceOhm: measurement.resistanceOhm,
+          reactanceOhm: measurement.reactanceOhm,
+          phaseAngleComputed: measurement.phaseAngleComputed,
+          rH: measurement.rH,
+          xcH: measurement.xcH,
+          bivaPattern: measurement.bivaPattern,
+        },
+        population: enginePop,
+        bodyComposition,
+      }) as unknown as Parameters<typeof renderToBuffer>[0]
+    );
+  } catch (e) {
+    console.error("PDF generation failed:", e);
+    console.error("Stack:", e instanceof Error ? e.stack : "no stack");
+    return NextResponse.json(
+      { error: "Errore nella generazione del PDF", detail: e instanceof Error ? e.message : String(e), stack: e instanceof Error ? e.stack : undefined },
+      { status: 500 }
+    );
+  }
 
   return new NextResponse(new Uint8Array(buffer), {
     headers: {

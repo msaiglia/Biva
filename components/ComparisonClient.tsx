@@ -60,7 +60,6 @@ export default function ComparisonClient({ populations, patients }: { population
         <Link href="/confronto" style={{ color: "#2a2a28", textDecoration: "none", fontWeight: 600 }}>Confronto</Link>
       </div>
 
-      <div style={{ fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", color: "#8a8578", marginBottom: 6 }}>Fase 3</div>
       <h1 style={{ fontSize: 24, marginBottom: 24 }}>Confronto multi-paziente</h1>
 
       <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>

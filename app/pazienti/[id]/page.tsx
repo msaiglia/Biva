@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import TrajectoryGraph from "@/components/TrajectoryGraph";
 import Footer from "@/components/Footer";
+import MeasurementRowActions from "@/components/MeasurementRowActions";
 import type { ReferencePopulation, BivaMethod } from "@/lib/biva-engine";
 
 export const dynamic = "force-dynamic";
@@ -127,9 +128,7 @@ export default async function PatientDetailPage({ params }: { params: Promise<{ 
                   </span>
                 </td>
                 <td style={{ ...td, textAlign: "right" }}>
-                  <a href={`/api/misurazioni/${m.id}/pdf`} target="_blank" rel="noreferrer" style={{ color: "#4a7ab5", textDecoration: "none", fontSize: 12 }}>
-                    PDF ↓
-                  </a>
+                  <MeasurementRowActions measurementId={m.id} patientId={patient.id} />
                 </td>
               </tr>
             ))}
