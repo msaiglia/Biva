@@ -1,100 +1,37 @@
 import { prisma } from "@/lib/prisma";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  let dbStatus: "ok" | "error" = "ok";
-  let referencePopulationCount = 0;
-  let errorDetail = "";
-
+  let userCount = 0;
   try {
-    referencePopulationCount = await prisma.referencePopulation.count();
-  } catch (e) {
-    dbStatus = "error";
-    errorDetail = e instanceof Error ? e.message : String(e);
-    console.error("DB connection check failed:", errorDetail);
+    userCount = await prisma.user.count();
+  } catch {
+    // Se il database non è raggiungibile, mostra comunque la pagina di stato
+    // diagnostica invece di un redirect che fallirebbe silenziosamente.
+    return <DiagnosticFallback />;
   }
 
-  return (
-    <main
-      style={{
-        maxWidth: 720,
-        margin: "0 auto",
-        padding: "48px 24px",
-        color: "#2a2a28",
-      }}
-    >
-      <div
-        style={{
-          fontSize: 11,
-          letterSpacing: "0.08em",
-          textTransform: "uppercase",
-          color: "#8a8578",
-          marginBottom: 6,
-        }}
-      >
-        Fase 1 — MVP
-      </div>
-      <h1 style={{ fontSize: 28, marginBottom: 24 }}>
-        Piattaforma BIVA
-      </h1>
+  if (userCount === 0) {
+    redirect("/registrati");
+  }
 
-      <StatusRow
-        label="Connessione database (Neon)"
-        ok={dbStatus === "ok"}
-        detail={dbStatus === "ok" ? "connesso" : `non connesso — ${errorDetail.slice(0, 300)}`}
-      />
-      <StatusRow
-        label="Popolazioni di riferimento caricate"
-        ok={referencePopulationCount > 0}
-        detail={
-          referencePopulationCount > 0
-            ? `${referencePopulationCount} popolazioni`
-            : "0 — dati di riferimento non ancora inseriti"
-        }
-      />
+  const session = await getServerSession(authOptions);
+  if (!session?.user) {
+    redirect("/login");
+  }
 
-      <div
-        style={{
-          marginTop: 32,
-          padding: "14px 16px",
-          background: "#fff3cd",
-          border: "1px solid #e0c068",
-          borderRadius: 3,
-          fontSize: 14,
-          color: "#6b5518",
-        }}
-      >
-        Questa è una pagina di verifica del deployment, non ancora
-        l&apos;interfaccia clinica. Le pagine per gestione pazienti,
-        misurazioni e grafico RXc si aggiungono dopo aver caricato le
-        popolazioni di riferimento verificate.
-      </div>
-    </main>
-  );
+  redirect("/pazienti");
 }
 
-function StatusRow({ label, ok, detail }: { label: string; ok: boolean; detail: string }) {
+function DiagnosticFallback() {
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: "10px 0",
-        borderBottom: "1px solid #e5e2d8",
-      }}
-    >
-      <span style={{ fontSize: 14 }}>{label}</span>
-      <span
-        style={{
-          fontSize: 13,
-          fontWeight: 600,
-          color: ok ? "#3d7a5c" : "#b23a3a",
-        }}
-      >
-        {ok ? "✓" : "✗"} {detail}
-      </span>
-    </div>
+    <main style={{ maxWidth: 720, margin: "0 auto", padding: "48px 24px", fontFamily: "'IBM Plex Sans', -apple-system, sans-serif" }}>
+      <h1 style={{ fontSize: 24 }}>Database non raggiungibile</h1>
+      <p style={{ color: "#b23a3a" }}>Controlla DATABASE_URL su Vercel.</p>
+    </main>
   );
 }
