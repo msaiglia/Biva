@@ -2,23 +2,19 @@
  * SEED — Popolazioni di riferimento BIVA
  * ========================================
  *
- * Tutti i valori numerici (media R/H, media Xc/H, SD, r) sono estratti
- * letteralmente dal materiale supplementare (Tabelle S5, S7, S8) di:
+ * METODO CLASSICO: valori estratti dal materiale supplementare (Tabelle
+ * S5, S7, S8) di Serafini S, et al. J Funct Morphol Kinesiol.
+ * 2025;10(4):415. DOI: 10.3390/jfmk10040415 (open access, CC BY).
  *
- *   Serafini S, Mascherini G, Vaquero-Cristóbal R, Esparza-Ros F, Campa F,
- *   Izzicupo P. "Reference Tolerance Ellipses in Bioelectrical Impedance
- *   Vector Analysis Across General, Pediatric, Pathological, and Athletic
- *   Populations: A Scoping Review." J Funct Morphol Kinesiol. 2025;10(4):415.
- *   DOI: 10.3390/jfmk10040415 (open access, CC BY)
+ * METODO SPECIFICO (Buffa & Marini): valori estratti dalla stessa fonte
+ * (colonne "Specific" delle stesse tabelle) più verifica diretta della
+ * formula su Buffa et al. 2013, PLoS ONE, DOI: 10.1371/journal.pone.0058533.
  *
- * che a sua volta cita le fonti primarie elencate in ciascun record
- * (campo sourceCitation). Per le 4 fonti primarie verificate
- * indipendentemente in questa sessione (Piccoli 1995, Campa 2023,
- * Campa 2025, Campa 2019) pubmedVerified = true con DOI diretto.
- * Per le altre fonti primarie (Piccoli 1998, Guglielmi 1999, Toso 2000),
- * la citazione proviene dalla Tabella S4 della scoping review ma il
- * DOI/PMID non è stato verificato individualmente in questa sessione:
- * pubmedVerified = false, da confermare prima di uso clinico.
+ * Per le fonti primarie verificate indipendentemente in questa sessione
+ * (Piccoli 1995, Campa 2023, Campa 2025, Campa 2019) pubmedVerified = true
+ * con DOI diretto. Per le altre, la citazione proviene dalla Tabella S4
+ * della scoping review ma il DOI/PMID non è stato verificato
+ * individualmente: pubmedVerified = false, da confermare prima di uso clinico.
  */
 
 import { PrismaClient } from "@prisma/client";
@@ -26,19 +22,20 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 const populations = [
-  // -------------------------------------------------------------------
-  // GENERALE — STORICO (Piccoli 1995)
-  // -------------------------------------------------------------------
+  // =====================================================================
+  // METODO CLASSICO (R/H, Xc/H — Ohm/m)
+  // =====================================================================
   {
     code: "PICCOLI_1995_M",
     label: "Adulti generali maschi — storico (Piccoli 1995)",
     sex: "M" as const,
+    method: "classic",
     category: "generale",
     n: 354,
-    meanRH: 298.6,
-    sdRH: 43.2,
-    meanXcH: 30.8,
-    sdXcH: 7.2,
+    meanX: 298.6,
+    sdX: 43.2,
+    meanY: 30.8,
+    sdY: 7.2,
     correlationR: 0.47,
     ageMin: 15,
     ageMax: 85,
@@ -51,12 +48,13 @@ const populations = [
     code: "PICCOLI_1995_F",
     label: "Adulti generali femmine — storico (Piccoli 1995)",
     sex: "F" as const,
+    method: "classic",
     category: "generale",
     n: 372,
-    meanRH: 371.9,
-    sdRH: 49.0,
-    meanXcH: 34.4,
-    sdXcH: 7.7,
+    meanX: 371.9,
+    sdX: 49.0,
+    meanY: 34.4,
+    sdY: 7.7,
     correlationR: 0.41,
     ageMin: 15,
     ageMax: 85,
@@ -65,20 +63,17 @@ const populations = [
     sourceDOI: "10.1093/ajcn/61.2.269",
     pubmedVerified: true,
   },
-
-  // -------------------------------------------------------------------
-  // GENERALE — AGGIORNATO (Campa 2023) — DEFAULT CONSIGLIATO
-  // -------------------------------------------------------------------
   {
     code: "CAMPA_2023_M",
     label: "Adulti generali maschi — aggiornato (Campa 2023)",
     sex: "M" as const,
+    method: "classic",
     category: "generale",
     n: 2137,
-    meanRH: 265.7,
-    sdRH: 35.1,
-    meanXcH: 32.1,
-    sdXcH: 4.9,
+    meanX: 265.7,
+    sdX: 35.1,
+    meanY: 32.1,
+    sdY: 4.9,
     correlationR: 0.60,
     ageMin: 18,
     ageMax: 65,
@@ -91,12 +86,13 @@ const populations = [
     code: "CAMPA_2023_F",
     label: "Adulti generali femmine — aggiornato (Campa 2023)",
     sex: "F" as const,
+    method: "classic",
     category: "generale",
     n: 2230,
-    meanRH: 337.2,
-    sdRH: 47.8,
-    meanXcH: 35.9,
-    sdXcH: 5.5,
+    meanX: 337.2,
+    sdX: 47.8,
+    meanY: 35.9,
+    sdY: 5.5,
     correlationR: 0.67,
     ageMin: 18,
     ageMax: 65,
@@ -105,20 +101,17 @@ const populations = [
     sourceDOI: "10.1016/j.clnu.2023.07.025",
     pubmedVerified: true,
   },
-
-  // -------------------------------------------------------------------
-  // ANZIANI (Campa 2025)
-  // -------------------------------------------------------------------
   {
     code: "CAMPA_2025_ELDERLY_M",
     label: "Anziani maschi (Campa 2025)",
     sex: "M" as const,
+    method: "classic",
     category: "anziani",
     n: 363,
-    meanRH: 280.2,
-    sdRH: 47.9,
-    meanXcH: 26.8,
-    sdXcH: 4.1,
+    meanX: 280.2,
+    sdX: 47.9,
+    meanY: 26.8,
+    sdY: 4.1,
     correlationR: 0.60,
     ageMin: 65,
     ageMax: 92,
@@ -131,12 +124,13 @@ const populations = [
     code: "CAMPA_2025_ELDERLY_F",
     label: "Anziani femmine (Campa 2025)",
     sex: "F" as const,
+    method: "classic",
     category: "anziani",
     n: 472,
-    meanRH: 363.8,
-    sdRH: 63.9,
-    meanXcH: 30.6,
-    sdXcH: 6.1,
+    meanX: 363.8,
+    sdX: 63.9,
+    meanY: 30.6,
+    sdY: 6.1,
     correlationR: 0.70,
     ageMin: 65,
     ageMax: 92,
@@ -145,20 +139,17 @@ const populations = [
     sourceDOI: "10.3389/fnut.2025.1640407",
     pubmedVerified: true,
   },
-
-  // -------------------------------------------------------------------
-  // ATLETI (Campa 2019 — tutti gli atleti, aggregato)
-  // -------------------------------------------------------------------
   {
     code: "CAMPA_2019_ATHLETES_M",
     label: "Atleti maschi, tutte le discipline (Campa 2019)",
     sex: "M" as const,
+    method: "classic",
     category: "atleti",
     n: 1116,
-    meanRH: 251.6,
-    sdRH: 32.5,
-    meanXcH: 33.9,
-    sdXcH: 4.8,
+    meanX: 251.6,
+    sdX: 32.5,
+    meanY: 33.9,
+    sdY: 4.8,
     correlationR: 0.70,
     ageMin: 16,
     ageMax: 40,
@@ -171,12 +162,13 @@ const populations = [
     code: "CAMPA_2019_ATHLETES_F",
     label: "Atlete femmine, tutte le discipline (Campa 2019)",
     sex: "F" as const,
+    method: "classic",
     category: "atleti",
     n: 440,
-    meanRH: 318.1,
-    sdRH: 42.8,
-    meanXcH: 38.3,
-    sdXcH: 6.4,
+    meanX: 318.1,
+    sdX: 42.8,
+    meanY: 38.3,
+    sdY: 6.4,
     correlationR: 0.70,
     ageMin: 16,
     ageMax: 40,
@@ -185,20 +177,17 @@ const populations = [
     sourceDOI: "10.3390/ijerph16245066",
     pubmedVerified: true,
   },
-
-  // -------------------------------------------------------------------
-  // IRC / EMODIALISI, stabili emodinamicamente (Piccoli 1998)
-  // -------------------------------------------------------------------
   {
     code: "PICCOLI_1998_HD_STABLE_M",
     label: "Emodialisi, stabili emodinamicamente — maschi (Piccoli 1998)",
     sex: "M" as const,
+    method: "classic",
     category: "IRC-dialisi",
     n: 680,
-    meanRH: 292.6,
-    sdRH: 40.6,
-    meanXcH: 26.3,
-    sdXcH: 5.8,
+    meanX: 292.6,
+    sdX: 40.6,
+    meanY: 26.3,
+    sdY: 5.8,
     correlationR: 0.32,
     sourceCitation:
       "Piccoli A. Identification of operational clues to dry weight prescription in hemodialysis using bioimpedance vector analysis. Kidney Int. 1998. (citazione da Tabella S4, Serafini et al. 2025 — DOI/PMID non verificato individualmente in questa sessione)",
@@ -208,31 +197,29 @@ const populations = [
     code: "PICCOLI_1998_HD_STABLE_F",
     label: "Emodialisi, stabili emodinamicamente — femmine (Piccoli 1998)",
     sex: "F" as const,
+    method: "classic",
     category: "IRC-dialisi",
     n: 436,
-    meanRH: 353.6,
-    sdRH: 44.9,
-    meanXcH: 29.3,
-    sdXcH: 7.3,
+    meanX: 353.6,
+    sdX: 44.9,
+    meanY: 29.3,
+    sdY: 7.3,
     correlationR: 0.38,
     sourceCitation:
       "Piccoli A. Identification of operational clues to dry weight prescription in hemodialysis using bioimpedance vector analysis. Kidney Int. 1998. (citazione da Tabella S4, Serafini et al. 2025 — DOI/PMID non verificato individualmente in questa sessione)",
     pubmedVerified: false,
   },
-
-  // -------------------------------------------------------------------
-  // OBESITÀ I-III (Piccoli 1998)
-  // -------------------------------------------------------------------
   {
     code: "PICCOLI_1998_OBESITY_M",
     label: "Obesità I-III — maschi (Piccoli 1998)",
     sex: "M" as const,
+    method: "classic",
     category: "obesita",
     n: 169,
-    meanRH: 234.6,
-    sdRH: 28.6,
-    meanXcH: 25.3,
-    sdXcH: 4.9,
+    meanX: 234.6,
+    sdX: 28.6,
+    meanY: 25.3,
+    sdY: 4.9,
     correlationR: 0.52,
     sourceCitation:
       "Piccoli A. Discriminating between body fat and fluid changes in the obese adult using bioimpedance vector analysis. 1998. (citazione da Tabella S4, Serafini et al. 2025 — DOI/PMID non verificato individualmente in questa sessione)",
@@ -242,31 +229,29 @@ const populations = [
     code: "PICCOLI_1998_OBESITY_F",
     label: "Obesità I-III — femmine (Piccoli 1998)",
     sex: "F" as const,
+    method: "classic",
     category: "obesita",
     n: 371,
-    meanRH: 299.0,
-    sdRH: 43.5,
-    meanXcH: 30.2,
-    sdXcH: 7.2,
+    meanX: 299.0,
+    sdX: 43.5,
+    meanY: 30.2,
+    sdY: 7.2,
     correlationR: 0.63,
     sourceCitation:
       "Piccoli A. Discriminating between body fat and fluid changes in the obese adult using bioimpedance vector analysis. 1998. (citazione da Tabella S4, Serafini et al. 2025 — DOI/PMID non verificato individualmente in questa sessione)",
     pubmedVerified: false,
   },
-
-  // -------------------------------------------------------------------
-  // CIRROSI EPATICA, senza ascite (Guglielmi 1999)
-  // -------------------------------------------------------------------
   {
     code: "GUGLIELMI_1999_CIRRHOSIS_M",
     label: "Cirrosi epatica, senza ascite — maschi (Guglielmi 1999)",
     sex: "M" as const,
+    method: "classic",
     category: "epatologia",
     n: 144,
-    meanRH: 290.0,
-    sdRH: 42.0,
-    meanXcH: 30.0,
-    sdXcH: 6.0,
+    meanX: 290.0,
+    sdX: 42.0,
+    meanY: 30.0,
+    sdY: 6.0,
     correlationR: 0.4,
     sourceCitation:
       "Guglielmi FW, et al. The RXc graph in evaluating and monitoring fluid balance in patients with liver cirrhosis. 1999. (citazione da Tabella S4, Serafini et al. 2025 — DOI/PMID non verificato individualmente in questa sessione)",
@@ -276,15 +261,103 @@ const populations = [
     code: "GUGLIELMI_1999_CIRRHOSIS_F",
     label: "Cirrosi epatica, senza ascite — femmine (Guglielmi 1999)",
     sex: "F" as const,
+    method: "classic",
     category: "epatologia",
     n: 116,
-    meanRH: 361.0,
-    sdRH: 50.0,
-    meanXcH: 34.0,
-    sdXcH: 7.0,
+    meanX: 361.0,
+    sdX: 50.0,
+    meanY: 34.0,
+    sdY: 7.0,
     correlationR: 0.4,
     sourceCitation:
       "Guglielmi FW, et al. The RXc graph in evaluating and monitoring fluid balance in patients with liver cirrhosis. 1999. (citazione da Tabella S4, Serafini et al. 2025 — DOI/PMID non verificato individualmente in questa sessione)",
+    pubmedVerified: false,
+  },
+
+  // =====================================================================
+  // METODO SPECIFICO (Rsp, Xcsp — Ohm*cm) — Buffa & Marini
+  // =====================================================================
+  {
+    code: "BUFFA_2013_SPECIFIC_US_M",
+    label: "Adulti USA maschi — BIVA specifica (Buffa 2013)",
+    sex: "M" as const,
+    method: "specific",
+    category: "generale",
+    n: 836,
+    meanX: 402.4,
+    sdX: 62.9,
+    meanY: 52.5,
+    sdY: 9.5,
+    correlationR: 0.839,
+    ageMin: 21,
+    ageMax: 49,
+    sourceCitation:
+      "Buffa R, Saragat B, Cabras S, Rinaldi AC, Marini E. Accuracy of Specific BIVA for the Assessment of Body Composition in the United States Population. PLoS ONE. 2013;8(3):e58533.",
+    sourceDOI: "10.1371/journal.pone.0058533",
+    pubmedVerified: true,
+  },
+  {
+    code: "SARAGAT_2014_SPECIFIC_ELDERLY_IT_M",
+    label: "Anziani italiani maschi — BIVA specifica (Saragat 2014)",
+    sex: "M" as const,
+    method: "specific",
+    category: "anziani",
+    n: 265,
+    meanX: 391.8,
+    sdX: 57.9,
+    meanY: 42.6,
+    sdY: 9.9,
+    correlationR: 0.59,
+    sourceCitation:
+      "Saragat B, Buffa R, Mereu E, De Rui M, Coin A, Sergi G, Marini E. Specific bioelectrical impedance vector reference values for assessing body composition in the Italian elderly. Exp Gerontol. 2014;50:52-56. (citazione da Tabella S4/S5, Serafini et al. 2025 — DOI/PMID non verificato individualmente in questa sessione)",
+    pubmedVerified: false,
+  },
+  {
+    code: "SARAGAT_2014_SPECIFIC_ELDERLY_IT_F",
+    label: "Anziane italiane femmine — BIVA specifica (Saragat 2014)",
+    sex: "F" as const,
+    method: "specific",
+    category: "anziani",
+    n: 295,
+    meanX: 462.0,
+    sdX: 80.1,
+    meanY: 47.9,
+    sdY: 11.2,
+    correlationR: 0.75,
+    sourceCitation:
+      "Saragat B, Buffa R, Mereu E, De Rui M, Coin A, Sergi G, Marini E. Specific bioelectrical impedance vector reference values for assessing body composition in the Italian elderly. Exp Gerontol. 2014;50:52-56. (citazione da Tabella S4/S5, Serafini et al. 2025 — DOI/PMID non verificato individualmente in questa sessione)",
+    pubmedVerified: false,
+  },
+  {
+    code: "IBANEZ_2015_SPECIFIC_YOUNG_ITES_M",
+    label: "Giovani adulti italo-spagnoli maschi — BIVA specifica (Ibáñez 2015)",
+    sex: "M" as const,
+    method: "specific",
+    category: "generale",
+    n: 213,
+    meanX: 332.7,
+    sdX: 41.6,
+    meanY: 44.4,
+    sdY: 6.8,
+    correlationR: 0.77,
+    sourceCitation:
+      "Ibáñez ME, et al. New specific bioelectrical impedance vector reference values for assessing body composition in the Italian-Spanish young adult population. Am J Hum Biol. 2015. (citazione da Tabella S4/S5, Serafini et al. 2025 — DOI/PMID non verificato individualmente in questa sessione)",
+    pubmedVerified: false,
+  },
+  {
+    code: "IBANEZ_2015_SPECIFIC_YOUNG_ITES_F",
+    label: "Giovani adulte italo-spagnole femmine — BIVA specifica (Ibáñez 2015)",
+    sex: "F" as const,
+    method: "specific",
+    category: "generale",
+    n: 227,
+    meanX: 388.6,
+    sdX: 60.0,
+    meanY: 43.7,
+    sdY: 7.5,
+    correlationR: 0.79,
+    sourceCitation:
+      "Ibáñez ME, et al. New specific bioelectrical impedance vector reference values for assessing body composition in the Italian-Spanish young adult population. Am J Hum Biol. 2015. (citazione da Tabella S4/S5, Serafini et al. 2025 — DOI/PMID non verificato individualmente in questa sessione)",
     pubmedVerified: false,
   },
 ] as const;
@@ -297,7 +370,7 @@ async function main() {
       update: pop,
       create: pop,
     });
-    console.log(`  ✓ ${pop.code}`);
+    console.log(`  ✓ ${pop.code} (${pop.method})`);
   }
   console.log("Completato.");
 }

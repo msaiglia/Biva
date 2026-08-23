@@ -51,13 +51,21 @@ model Measurement {
   resistanceOhm      Float // R, dal dispositivo
   reactanceOhm       Float // Xc, dal dispositivo
   phaseAngleDevice   Float? // PA letto direttamente dal dispositivo
-  // Campi derivati, calcolati dal motore e salvati per audit/storico:
+  // Circonferenze corporee, opzionali — necessarie solo per la BIVA specifica
+  armCircumferenceCm   Float?
+  waistCircumferenceCm Float?
+  calfCircumferenceCm  Float?
+  // Campi derivati BIVA classica, calcolati dal motore e salvati per audit/storico:
   rH                 Float // R/H, Ohm/m
   xcH                Float // Xc/H, Ohm/m
   phaseAngleComputed Float // arctan(Xc/R) * 180/pi
   referencePopulation ReferencePopulation @relation(fields: [referencePopulationId], references: [id])
   referencePopulationId String
-  bivaPattern        String? // risultato della classificazione a 7 zone
+  bivaPattern        String? // risultato della classificazione a 7 zone (classica)
+  // Campi derivati BIVA specifica, opzionali (solo se le circonferenze sono presenti):
+  rSp                Float? // Rsp, Ohm*cm
+  xcSp               Float? // Xcsp, Ohm*cm
+  bivaPatternSpecific String?
   notes              String?
   createdAt          DateTime           @default(now())
 
@@ -65,18 +73,22 @@ model Measurement {
 }
 
 /// Una riga = un'ellisse di riferimento, da tabelle pubblicate e verificate.
-/// Nessun valore è precaricato di default: va inserito da fonte citata.
+/// meanX/sdX/meanY/sdY sono generici: rappresentano R/H,Xc/H (metodo
+/// "classic") oppure Rsp,Xcsp (metodo "specific") — stessa geometria
+/// statistica, variabili diverse. Nessun valore è precaricato di default:
+/// va inserito da fonte citata (vedi prisma/seed.ts).
 model ReferencePopulation {
   id               String        @id @default(cuid())
   code             String        @unique // es. "PICCOLI_1995_M"
   label            String // es. "Adulti generali maschi (Piccoli 1995)"
   sex              Sex
+  method           String        @default("classic") // "classic" | "specific"
   category         String // generale | anziani | pediatrico | obesita | IRC-dialisi | oncologia | atleti
   n                Int // numerosità campionaria dello studio originale
-  meanRH           Float // Ohm/m
-  sdRH             Float
-  meanXcH          Float // Ohm/m
-  sdXcH            Float
+  meanX            Float // media R/H (Ohm/m) o Rsp (Ohm*cm) a seconda di method
+  sdX              Float
+  meanY            Float // media Xc/H (Ohm/m) o Xcsp (Ohm*cm) a seconda di method
+  sdY              Float
   correlationR     Float
   ageMin           Int?
   ageMax           Int?

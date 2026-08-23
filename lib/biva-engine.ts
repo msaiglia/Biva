@@ -2,24 +2,34 @@
  * MOTORE DI CALCOLO BIVA (Bioelectrical Impedance Vector Analysis)
  * ==================================================================
  *
- * Le formule geometriche delle ellissi di tolleranza/confidenza (funzioni
- * `criticalFValueD1Eq2` e `toleranceEllipse`) sono tradotte letteralmente
- * dalle Equazioni 1a e 2a della fonte primaria:
+ * Supporta DUE metodi, con la STESSA geometria statistica (ellisse di
+ * tolleranza) applicata a variabili diverse:
  *
- *   Piccoli A, Pastori G. "BIVA software." Dept. of Medical and Surgical
- *   Sciences, University of Padova, 2002.
- *   (guida ufficiale del software originale del metodo RXc graph)
+ *  - CLASSICA (Piccoli 1994): normalizza solo per altezza.
+ *      x = R/H, y = Xc/H, unità Ω/m.
+ *      Fonte: Piccoli A, Rossi B, Pillon L, Bucciante G. "A new method
+ *      for monitoring body fluid variation by bioimpedance analysis:
+ *      the RXc graph." Kidney Int. 1994;46:534-539.
  *
- * Riferimento del metodo RXc graph:
- *   Piccoli A, Rossi B, Pillon L, Bucciante G. "A new method for monitoring
- *   body fluid variation by bioimpedance analysis: the RXc graph."
- *   Kidney Int. 1994;46:534-539.
+ *  - SPECIFICA (Buffa & Marini 2013): corregge anche per la "sezione"
+ *      corporea (peso/circonferenze), non solo la lunghezza — elimina
+ *      l'artefatto per cui un soggetto fisicamente più voluminoso (più
+ *      massa muscolare o più massa grassa) risulta con resistenza più
+ *      bassa a parità di reale stato di idratazione cellulare.
+ *      x = Rsp, y = Xcsp, unità Ω·cm.
+ *      Fonte: Buffa R, Saragat B, Cabras S, Rinaldi AC, Marini E.
+ *      "Accuracy of Specific BIVA for the Assessment of Body Composition
+ *      in the United States Population." PLoS ONE. 2013;8(3):e58533.
+ *      DOI: 10.1371/journal.pone.0058533 (open access)
+ *
+ * Le formule geometriche delle ellissi di tolleranza/confidenza sono
+ * tradotte letteralmente dalle Equazioni 1a e 2a di:
+ *   Piccoli A, Pastori G. "BIVA software." Univ. of Padova, 2002.
  *
  * NESSUN valore numerico di popolazione di riferimento (media, SD, r) è
  * hard-coded in questo file: quei dati vanno inseriti nel database
  * `ReferencePopulation` a partire da tabelle pubblicate e verificate
- * (vedi campo `sourceCitation` e `pubmedVerified`), esattamente come nel
- * foglio "Reference populations" del software originale di Piccoli.
+ * (vedi campo `sourceCitation` e `pubmedVerified`).
  */
 
 // ---------------------------------------------------------------------
@@ -27,18 +37,32 @@
 // ---------------------------------------------------------------------
 
 export type Sex = "M" | "F";
+export type BivaMethod = "classic" | "specific";
 
-/** Una popolazione di riferimento (un'ellisse), da tabelle pubblicate. */
+/** Un punto generico sul piano (R/H,Xc/H) oppure (Rsp,Xcsp). */
+export interface Vector2D {
+  x: number;
+  y: number;
+}
+
+/**
+ * Una popolazione di riferimento (un'ellisse), da tabelle pubblicate.
+ *
+ * I campi meanX/sdX/meanY/sdY sono generici perché la STESSA geometria
+ * statistica si applica identica sia al metodo classico sia a quello
+ * specifico — cambia solo cosa rappresentano i numeri, non la matematica.
+ */
 export interface ReferencePopulation {
   code: string;
   label: string; // es. "Adulti generali (Piccoli 1995)"
   sex: Sex;
+  method: BivaMethod;
   n: number; // numerosità campionaria dello studio originale
-  meanRH: number; // media R/H, Ohm/m
-  sdRH: number; // deviazione standard R/H, Ohm/m
-  meanXcH: number; // media Xc/H, Ohm/m
-  sdXcH: number; // deviazione standard Xc/H, Ohm/m
-  r: number; // coefficiente di correlazione lineare R/H, Xc/H
+  meanX: number; // media R/H (classico, Ω/m) o Rsp (specifico, Ω·cm)
+  sdX: number;
+  meanY: number; // media Xc/H (classico, Ω/m) o Xcsp (specifico, Ω·cm)
+  sdY: number;
+  r: number; // coefficiente di correlazione lineare
   sourceCitation: string; // citazione completa
   sourceDOI?: string;
   pubmedVerified: boolean; // true solo se verificato con PMID/indicizzazione PubMed
@@ -49,34 +73,33 @@ export interface RawMeasurement {
   Xc: number; // Ohm
   heightCm: number;
   phaseAngleDevice?: number; // angolo di fase letto direttamente dal dispositivo, se disponibile
-}
-
-export interface NormalizedVector {
-  RH: number; // Ohm/m
-  XcH: number; // Ohm/m
+  // Opzionali, necessari solo per il calcolo BIVA specifica:
+  armCircumferenceCm?: number;
+  waistCircumferenceCm?: number;
+  calfCircumferenceCm?: number;
 }
 
 export interface EllipseGeometry {
   percentile: 50 | 75 | 95;
-  centerRH: number;
-  centerXcH: number;
+  centerX: number;
+  centerY: number;
   semiAxisMajor: number;
   semiAxisMinor: number;
-  rotationDeg: number; // rotazione dell'asse maggiore rispetto all'asse R/H
+  rotationDeg: number; // rotazione dell'asse maggiore rispetto all'asse x
 }
 
 // ---------------------------------------------------------------------
-// Normalizzazione e angolo di fase
+// BIVA CLASSICA — normalizzazione per altezza, angolo di fase
 // ---------------------------------------------------------------------
 
-/** Normalizza R e Xc per l'altezza (Ohm/m). */
-export function normalize(m: RawMeasurement): NormalizedVector {
+/** Normalizza R e Xc per l'altezza (Ohm/m) — metodo classico. */
+export function normalizeClassic(m: RawMeasurement): Vector2D {
   const heightM = m.heightCm / 100;
   if (heightM <= 0) throw new Error("Altezza non valida");
-  return { RH: m.R / heightM, XcH: m.Xc / heightM };
+  return { x: m.R / heightM, y: m.Xc / heightM };
 }
 
-/** Angolo di fase in gradi: arctan(Xc/R) * 180/pi. */
+/** Angolo di fase in gradi: arctan(Xc/R) * 180/pi. Uguale per entrambi i metodi. */
 export function phaseAngleDeg(R: number, Xc: number): number {
   return Math.atan(Xc / R) * (180 / Math.PI);
 }
@@ -88,8 +111,7 @@ export function impedanceModulus(R: number, Xc: number): number {
 
 /**
  * Verifica incrociata tra l'angolo di fase calcolato e quello letto dal
- * dispositivo (utile come controllo qualità del dato, dato che il
- * dispositivo dell'utente fornisce PA direttamente).
+ * dispositivo (utile come controllo qualità del dato).
  */
 export function crossCheckPhaseAngle(
   m: RawMeasurement,
@@ -108,7 +130,62 @@ export function crossCheckPhaseAngle(
 }
 
 // ---------------------------------------------------------------------
+// BIVA SPECIFICA — normalizzazione per "sezione" corporea (Buffa 2013)
+// ---------------------------------------------------------------------
+
+export interface SpecificVector {
+  Rsp: number; // Ω·cm
+  Xcsp: number; // Ω·cm
+  Zsp: number; // Ω·cm, impedivity = sqrt(Rsp² + Xcsp²)
+  totalAreaCm2: number; // per trasparenza/debug
+}
+
+/** Area di un segmento corporeo (braccio, vita o polpaccio) da circonferenza, in cm². */
+function segmentArea(circumferenceCm: number): number {
+  return (circumferenceCm * circumferenceCm) / (4 * Math.PI);
+}
+
+/**
+ * Calcola i valori di resistività/reattività specifica (Rsp, Xcsp) da
+ * R, Xc, altezza e le tre circonferenze corporee (braccio, vita, polpaccio).
+ *   Rsp  = R  × (A / L),   Xcsp = Xc × (A / L)
+ *   A (cm²) = 0.45·area_braccio + 0.10·area_vita + 0.45·area_polpaccio
+ *   L (cm)  = 1.1 × statura
+ */
+export function computeSpecificVector(
+  R: number,
+  Xc: number,
+  heightCm: number,
+  armCircumferenceCm: number,
+  waistCircumferenceCm: number,
+  calfCircumferenceCm: number
+): SpecificVector {
+  const armArea = segmentArea(armCircumferenceCm);
+  const waistArea = segmentArea(waistCircumferenceCm);
+  const calfArea = segmentArea(calfCircumferenceCm);
+  const totalAreaCm2 = 0.45 * armArea + 0.1 * waistArea + 0.45 * calfArea;
+  const effectiveLengthCm = 1.1 * heightCm;
+  const factor = totalAreaCm2 / effectiveLengthCm;
+
+  const Rsp = R * factor;
+  const Xcsp = Xc * factor;
+  const Zsp = Math.sqrt(Rsp * Rsp + Xcsp * Xcsp);
+
+  return { Rsp, Xcsp, Zsp, totalAreaCm2 };
+}
+
+/** True se la misurazione contiene tutti i dati necessari per la BIVA specifica. */
+export function hasSpecificData(m: RawMeasurement): boolean {
+  return (
+    m.armCircumferenceCm !== undefined &&
+    m.waistCircumferenceCm !== undefined &&
+    m.calfCircumferenceCm !== undefined
+  );
+}
+
+// ---------------------------------------------------------------------
 // Geometria delle ellissi di tolleranza (Piccoli & Pastori 2002, Eq. 1a/2a)
+// Identica per entrambi i metodi: opera sui campi generici meanX/sdX/meanY/sdY.
 // ---------------------------------------------------------------------
 
 /**
@@ -141,14 +218,19 @@ function alphaForPercentile(percentile: 50 | 75 | 95): number {
  *
  * Traduzione letterale di Eq. 1a e 2a della fonte primaria:
  *   K = F(n+1) / [n(n-2)]                         (tolleranza)
- *   L1,L2 = K * sqrt( (n-1)(sx²+sy²) ± sqrt(...) )
+ *   L1,L2 = sqrt( K * [ (n-1)(sx²+sy²) ± sqrt(...) ] )
  *   b1,b2 = pendenze degli assi principali
+ *
+ * NOTA sul fix: la radice quadrata va sull'INTERO prodotto K*(...), non
+ * solo sulla parentesi interna — verificato numericamente contro il
+ * comportamento asintotico atteso (l'ellisse di tolleranza deve
+ * convergere a un valore costante al crescere di n, non tendere a zero).
  */
 export function toleranceEllipse(
   pop: ReferencePopulation,
   percentile: 50 | 75 | 95
 ): EllipseGeometry {
-  const { n, sdRH: sx, sdXcH: sy, r } = pop;
+  const { n, sdX: sx, sdY: sy, r } = pop;
   const m = n - 2;
   const alpha = alphaForPercentile(percentile);
   const F = criticalFValueD1Eq2(alpha, m);
@@ -161,22 +243,17 @@ export function toleranceEllipse(
     A * A - 4 * (n - 1) * (n - 1) * (1 - r * r) * sx2 * sy2;
   const sqrtDisc = Math.sqrt(Math.max(discriminant, 0));
 
-  // NOTA: la radice quadrata va sull'INTERO prodotto K*(...), non solo
-  // sulla parentesi interna — bug corretto dopo verifica numerica del
-  // comportamento asintotico al crescere di n (l'ellisse di tolleranza
-  // deve convergere a un valore costante, non tendere a zero).
   const L1 = Math.sqrt(K * (A + sqrtDisc));
   const L2 = Math.sqrt(K * (A - sqrtDisc));
 
-  // Pendenza dell'asse principale (Eq. 2a)
   const term = (sy2 - sx2) / (2 * r * sx * sy);
   const b1 = term + Math.sqrt(1 + term * term);
   const rotationDeg = Math.atan(b1) * (180 / Math.PI);
 
   return {
     percentile,
-    centerRH: pop.meanRH,
-    centerXcH: pop.meanXcH,
+    centerX: pop.meanX,
+    centerY: pop.meanY,
     semiAxisMajor: Math.max(L1, L2),
     semiAxisMinor: Math.min(L1, L2),
     rotationDeg,
@@ -192,7 +269,7 @@ export function confidenceEllipse(
   pop: ReferencePopulation,
   alphaLevel = 0.05
 ): EllipseGeometry {
-  const { n, sdRH: sx, sdXcH: sy, r } = pop;
+  const { n, sdX: sx, sdY: sy, r } = pop;
   const m = n - 2;
   const F = criticalFValueD1Eq2(alphaLevel, m);
   const K = F / (n * (n - 2));
@@ -212,8 +289,8 @@ export function confidenceEllipse(
 
   return {
     percentile: 95,
-    centerRH: pop.meanRH,
-    centerXcH: pop.meanXcH,
+    centerX: pop.meanX,
+    centerY: pop.meanY,
     semiAxisMajor: Math.max(L1, L2),
     semiAxisMinor: Math.min(L1, L2),
     rotationDeg,
@@ -224,26 +301,18 @@ export function confidenceEllipse(
 // Z-score bivariato (RXc-score graph) — Eq. 1b/2b della fonte primaria
 // ---------------------------------------------------------------------
 
-export interface BivariateZScore {
-  zRH: number;
-  zXcH: number;
-}
-
 /** Trasforma un vettore individuale in Z-score bivariato rispetto a una popolazione. */
-export function toBivariateZScore(
-  v: NormalizedVector,
-  pop: ReferencePopulation
-): BivariateZScore {
+export function toBivariateZScore(v: Vector2D, pop: ReferencePopulation): Vector2D {
   return {
-    zRH: (v.RH - pop.meanRH) / pop.sdRH,
-    zXcH: (v.XcH - pop.meanXcH) / pop.sdXcH,
+    x: (v.x - pop.meanX) / pop.sdX,
+    y: (v.y - pop.meanY) / pop.sdY,
   };
 }
 
 /**
  * Geometria dell'ellisse di tolleranza sul piano Z-score standardizzato.
  * Per costruzione ha assi a ±45° (Eq. 2b: b1,b2 = ±1) e semiassi da Eq. 1b:
- *   L1,L2 = K * sqrt( 2(n-1) ± 2r(n-1) )
+ *   L1,L2 = sqrt( K * [ 2(n-1) ± 2r(n-1) ] )
  */
 export function toleranceEllipseZScore(
   pop: ReferencePopulation,
@@ -260,8 +329,8 @@ export function toleranceEllipseZScore(
 
   return {
     percentile,
-    centerRH: 0,
-    centerXcH: 0,
+    centerX: 0,
+    centerY: 0,
     semiAxisMajor: Math.max(L1, L2),
     semiAxisMinor: Math.min(L1, L2),
     rotationDeg: 45,
@@ -270,6 +339,9 @@ export function toleranceEllipseZScore(
 
 // ---------------------------------------------------------------------
 // Posizione rispetto alle ellissi e classificazione a 7 zone (pattern Piccoli)
+// Vale sia per il piano classico (R/H,Xc/H) sia per quello specifico
+// (Rsp,Xcsp): l'interpretazione degli assi (idratazione / massa cellulare)
+// è la stessa in entrambi i casi (Buffa & Marini 2013).
 // ---------------------------------------------------------------------
 
 export type BivaPattern =
@@ -282,18 +354,13 @@ export type BivaPattern =
   | "iperidratazione-massa-ridotta";
 
 /**
- * Determina se un punto (RH, XcH) è dentro un'ellisse ruotata, e la sua
- * "distanza" normalizzata (1.0 = esattamente sul bordo dell'ellisse).
+ * Determina se un punto è dentro un'ellisse ruotata, e la sua "distanza"
+ * normalizzata (1.0 = esattamente sul bordo dell'ellisse).
  */
-function pointEllipseDistance(
-  RH: number,
-  XcH: number,
-  e: EllipseGeometry
-): number {
-  const dx = RH - e.centerRH;
-  const dy = XcH - e.centerXcH;
+function pointEllipseDistance(v: Vector2D, e: EllipseGeometry): number {
+  const dx = v.x - e.centerX;
+  const dy = v.y - e.centerY;
   const theta = (e.rotationDeg * Math.PI) / 180;
-  // Ruota il punto nel sistema di riferimento degli assi dell'ellisse
   const xRot = dx * Math.cos(theta) + dy * Math.sin(theta);
   const yRot = -dx * Math.sin(theta) + dy * Math.cos(theta);
   return Math.sqrt(
@@ -313,36 +380,34 @@ export interface BivaClassification {
 /**
  * Classifica un vettore rispetto alla popolazione di riferimento, secondo
  * la logica del pattern Piccoli: l'asse maggiore descrive l'idratazione,
- * l'asse minore la massa cellulare/tessuti molli (Piccoli & Pastori 2002).
+ * l'asse minore la massa cellulare/tessuti molli.
  */
 export function classifyVector(
-  v: NormalizedVector,
+  v: Vector2D,
   pop: ReferencePopulation
 ): BivaClassification {
   const e50 = toleranceEllipse(pop, 50);
   const e75 = toleranceEllipse(pop, 75);
   const e95 = toleranceEllipse(pop, 95);
 
-  const d50 = pointEllipseDistance(v.RH, v.XcH, e50);
-  const d75 = pointEllipseDistance(v.RH, v.XcH, e75);
-  const d95 = pointEllipseDistance(v.RH, v.XcH, e95);
+  const d50 = pointEllipseDistance(v, e50);
+  const d75 = pointEllipseDistance(v, e75);
+  const d95 = pointEllipseDistance(v, e95);
 
   const withinEllipse50 = d50 <= 1;
   const withinEllipse75 = d75 <= 1;
   const withinEllipse95 = d95 <= 1;
 
-  // Proiezione sugli assi maggiore/minore rispetto al centro, per capire
-  // la direzione dello spostamento (idratazione vs massa cellulare).
-  const dx = v.RH - pop.meanRH;
-  const dy = v.XcH - pop.meanXcH;
+  const dx = v.x - pop.meanX;
+  const dy = v.y - pop.meanY;
   const theta = (e95.rotationDeg * Math.PI) / 180;
   const majorAxisProjection = dx * Math.cos(theta) + dy * Math.sin(theta);
   const minorAxisProjection = -dx * Math.sin(theta) + dy * Math.cos(theta);
 
   let pattern: BivaPattern = "normale";
   if (!withinEllipse75) {
-    const hydrationShift = majorAxisProjection > 0; // verso il polo superiore = disidratazione
-    const cellMassShift = minorAxisProjection > 0; // verso sinistra (asse minore +) = più massa cellulare
+    const hydrationShift = majorAxisProjection > 0;
+    const cellMassShift = minorAxisProjection > 0;
 
     if (Math.abs(majorAxisProjection) > Math.abs(minorAxisProjection) * 2) {
       pattern = hydrationShift ? "disidratazione" : "iperidratazione-edema";
@@ -372,17 +437,14 @@ export function classifyVector(
 // ---------------------------------------------------------------------
 
 export interface VectorDisplacement {
-  dRH: number;
-  dXcH: number;
-  distanceOhmPerM: number;
+  dx: number;
+  dy: number;
+  distance: number;
 }
 
 /** Calcola lo spostamento del vettore tra due misurazioni dello stesso paziente. */
-export function vectorDisplacement(
-  from: NormalizedVector,
-  to: NormalizedVector
-): VectorDisplacement {
-  const dRH = to.RH - from.RH;
-  const dXcH = to.XcH - from.XcH;
-  return { dRH, dXcH, distanceOhmPerM: Math.sqrt(dRH * dRH + dXcH * dXcH) };
+export function vectorDisplacement(from: Vector2D, to: Vector2D): VectorDisplacement {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  return { dx, dy, distance: Math.sqrt(dx * dx + dy * dy) };
 }
