@@ -15,6 +15,7 @@ import {
 } from "@/lib/biva-engine";
 
 interface PopulationDTO {
+  id: string;
   code: string;
   label: string;
   sex: string;
@@ -59,8 +60,21 @@ const PATTERN_LABELS: Record<string, string> = {
   "iperidratazione-massa-ridotta": "Iperidratazione + massa ridotta",
 };
 
-export default function MeasurementForm({ populations }: { populations: PopulationDTO[] }) {
-  const [sex, setSex] = useState<"M" | "F">("M");
+interface PatientInfo {
+  id: string;
+  firstName: string;
+  lastName: string;
+  sex: string;
+}
+
+export default function MeasurementForm({
+  populations,
+  patient,
+}: {
+  populations: PopulationDTO[];
+  patient?: PatientInfo | null;
+}) {
+  const [sex, setSex] = useState<"M" | "F">((patient?.sex as "M" | "F") || "M");
   const [R, setR] = useState(500);
   const [Xc, setXc] = useState(55);
   const [heightCm, setHeightCm] = useState(170);
@@ -70,6 +84,8 @@ export default function MeasurementForm({ populations }: { populations: Populati
   const [armCm, setArmCm] = useState<string>("");
   const [waistCm, setWaistCm] = useState<string>("");
   const [calfCm, setCalfCm] = useState<string>("");
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [saveError, setSaveError] = useState("");
 
   const classicPops = useMemo(
     () => populations.filter((p) => p.method === "classic" && p.sex === sex),
@@ -123,12 +139,59 @@ export default function MeasurementForm({ populations }: { populations: Populati
     [R, Xc, heightCm, armCm, waistCm, calfCm]
   );
 
+  async function handleSave() {
+    if (!patient || !classicPopDTO) return;
+    setSaveStatus("saving");
+    setSaveError("");
+    try {
+      const res = await fetch("/api/misurazioni", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          patientId: patient.id,
+          heightCm,
+          weightKg: weightKg ? Number(weightKg) : undefined,
+          resistanceOhm: R,
+          reactanceOhm: Xc,
+          phaseAngleDevice: phaseAngleDevice ? Number(phaseAngleDevice) : undefined,
+          armCircumferenceCm: armCm ? Number(armCm) : undefined,
+          waistCircumferenceCm: waistCm ? Number(waistCm) : undefined,
+          calfCircumferenceCm: calfCm ? Number(calfCm) : undefined,
+          referencePopulationId: classicPops.find((p) => p.code === activeClassicCode)?.id,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setSaveError(data.error || "Errore durante il salvataggio.");
+        setSaveStatus("error");
+        return;
+      }
+      setSaveStatus("saved");
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : String(e));
+      setSaveStatus("error");
+    }
+  }
+
   return (
     <main style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 24px", color: "#2a2a28", fontFamily: "'IBM Plex Sans', -apple-system, sans-serif" }}>
-      <div style={{ fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", color: "#8a8578", marginBottom: 6 }}>
-        Fase 1 — MVP
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        <div>
+          <div style={{ fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", color: "#8a8578", marginBottom: 6 }}>
+            {patient ? `Misurazione per ${patient.lastName} ${patient.firstName}` : "Calcolatore — nessun paziente collegato"}
+          </div>
+          <h1 style={{ fontSize: 26, marginBottom: 28 }}>Misurazione BIVA</h1>
+        </div>
+        {patient && (
+          <div style={{ textAlign: "right" }}>
+            <button onClick={handleSave} disabled={saveStatus === "saving"} style={saveButtonStyle}>
+              {saveStatus === "saving" ? "Salvataggio..." : "Salva misurazione"}
+            </button>
+            {saveStatus === "saved" && <div style={{ fontSize: 12, color: "#3d7a5c", marginTop: 6 }}>✓ Salvata</div>}
+            {saveStatus === "error" && <div style={{ fontSize: 12, color: "#b23a3a", marginTop: 6 }}>{saveError}</div>}
+          </div>
+        )}
       </div>
-      <h1 style={{ fontSize: 26, marginBottom: 28 }}>Misurazione BIVA</h1>
 
       <div style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: 32, alignItems: "start" }}>
         {/* --- Colonna sinistra: form --- */}
@@ -569,6 +632,17 @@ function SexButton({ active, onClick, children }: { active: boolean; onClick: ()
     </button>
   );
 }
+
+const saveButtonStyle: React.CSSProperties = {
+  padding: "9px 18px",
+  borderRadius: 3,
+  border: "none",
+  background: "#3d7a5c",
+  color: "#fff",
+  fontSize: 13,
+  fontWeight: 600,
+  cursor: "pointer",
+};
 
 const inputStyle: React.CSSProperties = {
   width: "100%",

@@ -3,8 +3,14 @@ import MeasurementForm from "@/components/MeasurementForm";
 
 export const dynamic = "force-dynamic";
 
-export default async function MisurazionePage() {
+export default async function MisurazionePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ pazienteId?: string }>;
+}) {
+  const params = await searchParams;
   let populations: Array<{
+    id: string;
     code: string;
     label: string;
     sex: string;
@@ -21,11 +27,16 @@ export default async function MisurazionePage() {
     pubmedVerified: boolean;
   }> = [];
   let loadError = "";
+  let patient: { id: string; firstName: string; lastName: string; sex: string } | null = null;
 
   try {
     populations = await prisma.referencePopulation.findMany({
       orderBy: [{ method: "asc" }, { category: "asc" }, { label: "asc" }],
     });
+    if (params.pazienteId) {
+      const p = await prisma.patient.findUnique({ where: { id: params.pazienteId } });
+      if (p) patient = { id: p.id, firstName: p.firstName, lastName: p.lastName, sex: p.sex };
+    }
   } catch (e) {
     loadError = e instanceof Error ? e.message : String(e);
   }
@@ -51,5 +62,5 @@ export default async function MisurazionePage() {
     );
   }
 
-  return <MeasurementForm populations={populations} />;
+  return <MeasurementForm populations={populations} patient={patient} />;
 }
