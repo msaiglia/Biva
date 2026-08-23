@@ -8,6 +8,7 @@ import {
   toleranceEllipse,
   classifyVector,
   phaseAngleDeg,
+  computeBodyComposition,
   type ReferencePopulation,
   type Vector2D,
   type BivaMethod,
@@ -239,6 +240,12 @@ export default function MeasurementForm({ populations }: { populations: Populati
             <EmptyPanel text="Inserisci tutte e tre le circonferenze (braccio, vita, polpaccio) per vedere il grafico della BIVA specifica." />
           )}
 
+          {weightKg ? (
+            <BodyCompositionPanel R={R} Xc={Xc} heightCm={heightCm} weightKg={Number(weightKg)} sex={sex} />
+          ) : (
+            <EmptyPanel text="Inserisci il peso corporeo per vedere le stime quantitative (TBW, FFM, FM, ECW, ICW)." />
+          )}
+
           <div style={{ fontSize: 13, color: "#8a8578", padding: "12px 16px", background: "#f5f3ee", borderRadius: 3 }}>
             Angolo di fase calcolato: <strong style={{ color: "#2a2a28" }}>{pa.toFixed(2)}°</strong>
             {phaseAngleDevice && Math.abs(Number(phaseAngleDevice) - pa) > 0.2 && (
@@ -252,8 +259,113 @@ export default function MeasurementForm({ populations }: { populations: Populati
 }
 
 // -----------------------------------------------------------------------
-// Sottocomponenti
+// Pannello stime quantitative (TBW, FFM, FM, ECW, ICW)
 // -----------------------------------------------------------------------
+
+function BodyCompositionPanel({
+  R,
+  Xc,
+  heightCm,
+  weightKg,
+  sex,
+}: {
+  R: number;
+  Xc: number;
+  heightCm: number;
+  weightKg: number;
+  sex: "M" | "F";
+}) {
+  const [refMode, setRefMode] = useState<"altezza" | "peso">("altezza");
+  const bc = useMemo(
+    () => computeBodyComposition(R, Xc, heightCm, weightKg, sex),
+    [R, Xc, heightCm, weightKg, sex]
+  );
+  const heightM = heightCm / 100;
+
+  function formatRef(valueKgOrL: number, unit: "kg" | "L"): string {
+    if (refMode === "altezza") {
+      return `${(valueKgOrL / heightM).toFixed(1)} ${unit}/m`;
+    }
+    return `${((valueKgOrL / weightKg) * 100).toFixed(1)} %`;
+  }
+
+  return (
+    <div style={{ background: "#fff", border: "1px solid #e5e2d8", borderRadius: 4, padding: 20 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+        <div style={{ fontSize: 15, fontWeight: 600 }}>Stime quantitative</div>
+        <div style={{ display: "flex", gap: 6 }}>
+          <ToggleButton active={refMode === "altezza"} onClick={() => setRefMode("altezza")}>Riferimenti su altezza</ToggleButton>
+          <ToggleButton active={refMode === "peso"} onClick={() => setRefMode("peso")}>Riferimenti su peso (%)</ToggleButton>
+        </div>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: "6px 16px", fontSize: 13, alignItems: "center" }}>
+        <HeaderRow />
+        <BcRow label="Acqua Totale (TBW)" value={`${bc.tbwL.toFixed(1)} l`} ref={formatRef(bc.tbwL, "L")} />
+        <BcRow
+          label="Acqua Extracellulare (ECW)"
+          value={`${bc.ecwL.toFixed(1)} l`}
+          ref={`${bc.ecwToTbwPercent.toFixed(0)}% del TBW`}
+        />
+        <BcRow
+          label="Acqua Intracellulare (ICW)"
+          value={`${bc.icwL.toFixed(1)} l`}
+          ref={`${bc.icwToTbwPercent.toFixed(0)}% del TBW`}
+        />
+        <BcRow label="Massa Magra (FFM)" value={`${bc.ffmKg.toFixed(1)} kg`} ref={formatRef(bc.ffmKg, "kg")} />
+        <BcRow label="Massa Grassa (FM)" value={`${bc.fmKg.toFixed(1)} kg`} ref={formatRef(bc.fmKg, "kg")} />
+      </div>
+
+      <div style={{ fontSize: 11, color: "#8a8578", marginTop: 16, lineHeight: 1.6, borderTop: "1px solid #eeece5", paddingTop: 12 }}>
+        <strong>Nota metodologica</strong> — a differenza del vettore BIVA sopra (nessuna equazione), questi sono
+        <strong> valori stimati</strong> tramite equazioni di regressione pubblicate: TBW da Sun et al., <em>Am J Clin Nutr</em> 2003
+        (DOI: 10.1093/ajcn/77.2.331); FFM derivata da TBW/0.73 (costante di idratazione, ESPEN/Kyle et al., <em>Clin Nutr</em> 2004,
+        DOI: 10.1016/j.clnu.2004.06.004); ECW/ICW da un rapporto di popolazione medio (40%/60% del TBW), non una stima
+        individualizzata — la scomposizione accurata richiederebbe bioimpedenziometria multi-frequenza. Software diversi (incluso
+        il tuo dispositivo) possono dare numeri leggermente diversi a parità di R/Xc: è un limite noto della letteratura, non un errore.
+      </div>
+    </div>
+  );
+}
+
+function HeaderRow() {
+  return (
+    <>
+      <span></span>
+      <span style={{ fontSize: 11, color: "#8a8578", textAlign: "right" }}>Valore</span>
+      <span style={{ fontSize: 11, color: "#8a8578", textAlign: "right" }}>Riferimento</span>
+    </>
+  );
+}
+
+function BcRow({ label, value, ref }: { label: string; value: string; ref: string }) {
+  return (
+    <>
+      <span style={{ color: "#5a564c" }}>{label}</span>
+      <span style={{ fontWeight: 600, textAlign: "right" }}>{value}</span>
+      <span style={{ color: "#8a8578", textAlign: "right" }}>{ref}</span>
+    </>
+  );
+}
+
+function ToggleButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        padding: "4px 10px",
+        borderRadius: 3,
+        border: "1px solid #c9c5b8",
+        background: active ? "#2a2a28" : "#fff",
+        color: active ? "#fff" : "#5a564c",
+        cursor: "pointer",
+        fontSize: 11,
+      }}
+    >
+      {children}
+    </button>
+  );
+}
 
 function GraphPanel({
   title,
