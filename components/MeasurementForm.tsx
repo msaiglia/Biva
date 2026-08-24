@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import AppShell from "@/components/AppShell";
+import RangeBar from "@/components/RangeBar";
+import { ffmiRange, fmiRange, tbwPercentRange } from "@/lib/reference-ranges";
 import {
   normalizeClassic,
   computeSpecificVector,
@@ -99,6 +101,7 @@ export default function MeasurementForm({
   const [measuredAt, setMeasuredAt] = useState(existingMeasurement?.measuredAt ?? (() => new Date().toISOString().slice(0, 10))());
   const [heightCm, setHeightCm] = useState(existingMeasurement?.heightCm ?? 170);
   const [weightKg, setWeightKg] = useState<string>(existingMeasurement?.weightKg ? String(existingMeasurement.weightKg) : "");
+  const [age, setAge] = useState<string>("40");
   const [phaseAngleDevice, setPhaseAngleDevice] = useState<string>(existingMeasurement?.phaseAngleDevice ? String(existingMeasurement.phaseAngleDevice) : "");
   const [showSpecific, setShowSpecific] = useState(!!existingMeasurement?.armCircumferenceCm);
   const [armCm, setArmCm] = useState<string>(existingMeasurement?.armCircumferenceCm ? String(existingMeasurement.armCircumferenceCm) : "");
@@ -245,6 +248,9 @@ export default function MeasurementForm({
             <FieldRow label="Peso (kg) — opzionale">
               <input type="number" value={weightKg} onChange={(e) => setWeightKg(e.target.value)} style={inputStyle} placeholder="es. 75" />
             </FieldRow>
+            <FieldRow label="Età (anni) — per i range di riferimento">
+              <input type="number" value={age} onChange={(e) => setAge(e.target.value)} style={inputStyle} placeholder="es. 40" />
+            </FieldRow>
           </Section>
 
           <Section title="Misurazione bioimpedenziometrica">
@@ -343,7 +349,7 @@ export default function MeasurementForm({
           )}
 
           {weightKg ? (
-            <BodyCompositionPanel R={R} Xc={Xc} heightCm={heightCm} weightKg={Number(weightKg)} sex={sex} />
+            <BodyCompositionPanel R={R} Xc={Xc} heightCm={heightCm} weightKg={Number(weightKg)} sex={sex} ageYears={Number(age) || 40} />
           ) : (
             <EmptyPanel text="Inserisci il peso corporeo per vedere le stime quantitative (TBW, FFM, FM, ECW, ICW)." />
           )}
@@ -371,12 +377,14 @@ function BodyCompositionPanel({
   heightCm,
   weightKg,
   sex,
+  ageYears,
 }: {
   R: number;
   Xc: number;
   heightCm: number;
   weightKg: number;
   sex: "M" | "F";
+  ageYears: number;
 }) {
   const [refMode, setRefMode] = useState<"altezza" | "peso">("altezza");
   const bc = useMemo(
@@ -392,6 +400,10 @@ function BodyCompositionPanel({
     return `${((valueKgOrL / weightKg) * 100).toFixed(1)} %`;
   }
 
+  const ffmi = bc.ffmKg / (heightM * heightM);
+  const fmi = bc.fmKg / (heightM * heightM);
+  const tbwPercent = (bc.tbwL / weightKg) * 100;
+
   return (
     <div style={{ background: "#fff", border: "1px solid #e5e2d8", borderRadius: 4, padding: 20 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
@@ -402,7 +414,7 @@ function BodyCompositionPanel({
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: "6px 16px", fontSize: 13, alignItems: "center" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: "6px 16px", fontSize: 13, alignItems: "center", marginBottom: 20 }}>
         <HeaderRow />
         <BcRow label="Acqua Totale (TBW)" value={`${bc.tbwL.toFixed(1)} l`} ref={formatRef(bc.tbwL, "L")} />
         <BcRow
@@ -420,13 +432,28 @@ function BodyCompositionPanel({
         <BcRow label="Massa Cellulare (BCM)" value={`${bc.bcmKg.toFixed(1)} kg`} ref={formatRef(bc.bcmKg, "kg")} />
       </div>
 
-      <div style={{ fontSize: 11, color: "#8a8578", marginTop: 16, lineHeight: 1.6, borderTop: "1px solid #eeece5", paddingTop: 12 }}>
+      <div style={{ fontSize: 11, letterSpacing: "0.05em", textTransform: "uppercase", color: "#8a8578", marginBottom: 14, borderTop: "1px solid #eeece5", paddingTop: 14 }}>
+        Posizione rispetto a range di riferimento pubblicati
+      </div>
+
+      <RangeBar label="Indice Massa Magra (FFMI)" value={ffmi} unit="kg/m²" zones={ffmiRange(sex)} />
+      <RangeBar label="Indice Massa Grassa (FMI)" value={fmi} unit="kg/m²" zones={fmiRange(sex, ageYears)} />
+      <RangeBar label="Acqua Totale (% peso corporeo)" value={tbwPercent} unit="%" zones={tbwPercentRange()} />
+
+      <div style={{ fontSize: 11, color: "#8a8578", marginTop: 4, marginBottom: 16, padding: "10px 12px", background: "#f7f9fa", borderRadius: 4 }}>
+        <strong>ECW, ICW e BCM non hanno zone colorate.</strong> Per ECW/ICW disponiamo solo di un rapporto medio di popolazione
+        (Moissl et al. 2006), non di una distribuzione con percentili individualizzabili. Per il BCM, la revisione sistematica più
+        recente (Kampo, Závodná &amp; Vondra, <em>Physiol Res</em> 2025, PMID 41511100) conferma una carenza di equazioni e range di
+        riferimento validati in letteratura per questo parametro — non è un limite di questa app, è un gap riconosciuto nel campo.
+      </div>
+
+      <div style={{ fontSize: 11, color: "#8a8578", lineHeight: 1.6, borderTop: "1px solid #eeece5", paddingTop: 12 }}>
         <strong>Nota metodologica</strong> — a differenza del vettore BIVA sopra (nessuna equazione), questi sono
         <strong> valori stimati</strong> tramite equazioni di regressione pubblicate: TBW da Sun et al., <em>Am J Clin Nutr</em> 2003
         (DOI: 10.1093/ajcn/77.2.331); FFM derivata da TBW/0.73 (costante di idratazione, ESPEN/Kyle et al., <em>Clin Nutr</em> 2004,
-        DOI: 10.1016/j.clnu.2004.06.004); ECW/ICW da un rapporto di popolazione medio (40%/60% del TBW), non una stima
-        individualizzata — la scomposizione accurata richiederebbe bioimpedenziometria multi-frequenza. Software diversi (incluso
-        il tuo dispositivo) possono dare numeri leggermente diversi a parità di R/Xc: è un limite noto della letteratura, non un errore.
+        DOI: 10.1016/j.clnu.2004.06.004); FFMI/FMI da Coin et al., <em>Clin Nutr</em> 2008 (PMID 18206273, popolazione italiana).
+        Software diversi (incluso il tuo dispositivo) possono dare numeri leggermente diversi a parità di R/Xc: è un limite noto
+        della letteratura, non un errore.
       </div>
     </div>
   );
