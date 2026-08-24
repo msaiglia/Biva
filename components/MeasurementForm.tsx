@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import AppShell from "@/components/AppShell";
 import RangeBar from "@/components/RangeBar";
-import { ffmiRange, fmiRange, tbwPercentRange } from "@/lib/reference-ranges";
+import { ffmiRange, fmiRange, tbwPercentRange, bmiRange, bmiCategory } from "@/lib/reference-ranges";
 import {
   normalizeClassic,
   computeSpecificVector,
@@ -403,6 +403,7 @@ function BodyCompositionPanel({
   const ffmi = bc.ffmKg / (heightM * heightM);
   const fmi = bc.fmKg / (heightM * heightM);
   const tbwPercent = (bc.tbwL / weightKg) * 100;
+  const bmi = weightKg / (heightM * heightM);
 
   return (
     <div style={{ background: "#fff", border: "1px solid #e5e2d8", borderRadius: 4, padding: 20 }}>
@@ -416,6 +417,7 @@ function BodyCompositionPanel({
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: "6px 16px", fontSize: 13, alignItems: "center", marginBottom: 20 }}>
         <HeaderRow />
+        <BcRow label="Indice di Massa Corporea (BMI)" value={`${bmi.toFixed(1)} kg/m²`} ref={bmiCategory(bmi)} />
         <BcRow label="Acqua Totale (TBW)" value={`${bc.tbwL.toFixed(1)} l`} ref={formatRef(bc.tbwL, "L")} />
         <BcRow
           label="Acqua Extracellulare (ECW)"
@@ -436,6 +438,7 @@ function BodyCompositionPanel({
         Posizione rispetto a range di riferimento pubblicati
       </div>
 
+      <RangeBar label="Indice di Massa Corporea (BMI)" value={bmi} unit="kg/m²" zones={bmiRange()} />
       <RangeBar label="Indice Massa Magra (FFMI)" value={ffmi} unit="kg/m²" zones={ffmiRange(sex)} />
       <RangeBar label="Indice Massa Grassa (FMI)" value={fmi} unit="kg/m²" zones={fmiRange(sex, ageYears)} />
       <RangeBar label="Acqua Totale (% peso corporeo)" value={tbwPercent} unit="%" zones={tbwPercentRange()} />

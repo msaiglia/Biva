@@ -7,6 +7,7 @@ import {
   type Vector2D,
   type BodyComposition,
 } from "@/lib/biva-engine";
+import { bmiCategory } from "@/lib/reference-ranges";
 
 const PATTERN_LABELS: Record<string, string> = {
   normale: "Normale",
@@ -148,6 +149,9 @@ export default function MeasurementReport({ patient, measurement, population, bo
   const vector: Vector2D = { x: measurement.rH, y: measurement.xcH };
   const classification = classifyVector(vector, population);
   const statusColor = classification.distanceFromCenter95 > 1 ? "#b23a3a" : classification.pattern === "normale" ? "#3d7a5c" : "#b8873a";
+  const bmi = bodyComposition && measurement.weightKg
+    ? measurement.weightKg / ((measurement.heightCm / 100) * (measurement.heightCm / 100))
+    : null;
 
   return (
     <Document>
@@ -229,6 +233,9 @@ export default function MeasurementReport({ patient, measurement, population, bo
         {bodyComposition && (
           <View style={{ marginTop: 20 }}>
             <Text style={styles.sectionTitle}>Stime quantitative</Text>
+            {bmi !== null && (
+              <View style={styles.row}><Text style={styles.rowLabel}>Indice di Massa Corporea (BMI)</Text><Text style={styles.rowValue}>{bmi.toFixed(1)} kg/m2 ({bmiCategory(bmi)})</Text></View>
+            )}
             <View style={styles.row}><Text style={styles.rowLabel}>Acqua Totale (TBW)</Text><Text style={styles.rowValue}>{bodyComposition.tbwL.toFixed(1)} l</Text></View>
             <View style={styles.row}><Text style={styles.rowLabel}>Acqua Extracellulare (ECW)</Text><Text style={styles.rowValue}>{bodyComposition.ecwL.toFixed(1)} l ({bodyComposition.ecwToTbwPercent.toFixed(0)}% del TBW)</Text></View>
             <View style={styles.row}><Text style={styles.rowLabel}>Acqua Intracellulare (ICW)</Text><Text style={styles.rowValue}>{bodyComposition.icwL.toFixed(1)} l ({bodyComposition.icwToTbwPercent.toFixed(0)}% del TBW)</Text></View>
@@ -241,6 +248,7 @@ export default function MeasurementReport({ patient, measurement, population, bo
         <Text style={styles.citation}>
           Vettore BIVA calcolato senza equazioni predittive (Piccoli A, et al. Kidney Int. 1994;46:534-539), posizionato rispetto a: {population.sourceCitation}
           {bodyComposition && " Stime quantitative da equazioni di regressione pubblicate (Sun et al. 2003; ESPEN/Kyle et al. 2004; Dittmar & Reber 2001) - vedi documentazione per dettagli e limiti."}
+          {bmi !== null && " BMI classificato secondo OMS/WHO (Technical Report Series 894, 2000): sottopeso <18.5, normopeso 18.5-24.9, sovrappeso 25-29.9, obesità >=30."}
         </Text>
 
         <Text style={styles.footer} fixed>

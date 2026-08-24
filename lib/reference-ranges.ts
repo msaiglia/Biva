@@ -94,3 +94,30 @@ export function tbwPercentRange(): RangeZones {
     sourceLabel: "Range fisiologico generale (fisiologia clinica consolidata, non percentili di uno studio specifico)",
   };
 }
+
+/**
+ * BMI (kg/m²) — classificazione OMS/WHO standard internazionale
+ * (WHO Technical Report Series 894, 2000): sottopeso <18.5, normopeso
+ * 18.5-24.9, sovrappeso 25-29.9, obesità ≥30. Non individualizzata per
+ * sesso/età/composizione corporea — è un indice antropometrico generico,
+ * non specifico per la BIVA.
+ */
+export function bmiRange(): RangeZones {
+  return {
+    min: 12,
+    lowBoundary: 18.5,
+    normalLow: 18.5,
+    normalHigh: 25.0,
+    highBoundary: 30.0,
+    max: 45,
+    sourceLabel: "Classificazione OMS (WHO) — sottopeso <18.5, normopeso 18.5-24.9, sovrappeso 25-29.9, obesità ≥30",
+  };
+}
+
+/** Etichetta categoria OMS/WHO per un dato valore di BMI. */
+export function bmiCategory(bmi: number): string {
+  if (bmi < 18.5) return "Sottopeso";
+  if (bmi < 25) return "Normopeso";
+  if (bmi < 30) return "Sovrappeso";
+  return "Obesità";
+}
