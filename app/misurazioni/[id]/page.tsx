@@ -7,6 +7,7 @@ import AppShell from "@/components/AppShell";
 import { COLORS } from "@/components/Sidebar";
 import { computeBodyComposition } from "@/lib/biva-engine";
 import { bmiCategory } from "@/lib/reference-ranges";
+import RxcVectorGraph from "@/components/RxcVectorGraph";
 
 export const dynamic = "force-dynamic";
 
@@ -88,6 +89,29 @@ export default async function MeasurementViewPage({ params }: { params: Promise<
               Modifica
             </Link>
           </div>
+        </div>
+
+        <div style={{ marginBottom: 28 }}>
+          <RxcVectorGraph
+            title="BIVA classica — R/H, Xc/H"
+            subtitle={measurement.referencePopulation.label}
+            unit="Ω/m"
+            pop={{
+              code: measurement.referencePopulation.code,
+              label: measurement.referencePopulation.label,
+              sex: measurement.referencePopulation.sex as "M" | "F",
+              method: measurement.referencePopulation.method as "classic" | "specific",
+              n: measurement.referencePopulation.n,
+              meanX: measurement.referencePopulation.meanX,
+              sdX: measurement.referencePopulation.sdX,
+              meanY: measurement.referencePopulation.meanY,
+              sdY: measurement.referencePopulation.sdY,
+              r: measurement.referencePopulation.correlationR,
+              sourceCitation: measurement.referencePopulation.sourceCitation,
+              pubmedVerified: measurement.referencePopulation.pubmedVerified,
+            }}
+            vector={{ x: measurement.rH, y: measurement.xcH }}
+          />
         </div>
 
         <Section title="Valori misurati">
