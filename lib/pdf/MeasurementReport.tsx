@@ -72,20 +72,50 @@ function RxcGraph({ pop, vector, unit }: { pop: ReferencePopulation; vector: Vec
   if (vector.y < yMin) yMin = vector.y - extentY * 0.15;
   if (vector.y > yMax) yMax = vector.y + extentY * 0.15;
 
-  const W = 260;
-  const H = 240;
-  const pad = 24;
-  const sx = (x: number) => pad + ((x - rMin) / (rMax - rMin)) * (W - 2 * pad);
-  const sy = (y: number) => H - pad - ((y - yMin) / (yMax - yMin)) * (H - 2 * pad);
+  const W = 280;
+  const H = 260;
+  const padLeft = 34;
+  const padRight = 14;
+  const padTop = 14;
+  const padBottom = 30;
+  const sx = (x: number) => padLeft + ((x - rMin) / (rMax - rMin)) * (W - padLeft - padRight);
+  const sy = (y: number) => H - padBottom - ((y - yMin) / (yMax - yMin)) * (H - padTop - padBottom);
 
   const colors = ["#3d7a5c", "#b8873a", "#b23a3a"];
   const classification = classifyVector(vector, pop);
   const statusColor = classification.distanceFromCenter95 > 1 ? "#b23a3a" : classification.pattern === "normale" ? "#3d7a5c" : "#b8873a";
 
+  // Tacche: 4 valori equidistanti su ciascun asse, con etichetta numerica
+  const tickCount = 4;
+  const xTicks = Array.from({ length: tickCount + 1 }, (_, i) => rMin + (i * (rMax - rMin)) / tickCount);
+  const yTicks = Array.from({ length: tickCount + 1 }, (_, i) => yMin + (i * (yMax - yMin)) / tickCount);
+
   return (
     <Svg width={W} height={H}>
-      <Line x1={pad} y1={H - pad} x2={W - pad} y2={H - pad} stroke="#c9c5b8" strokeWidth={0.5} />
-      <Line x1={pad} y1={pad} x2={pad} y2={H - pad} stroke="#c9c5b8" strokeWidth={0.5} />
+      <Line x1={padLeft} y1={H - padBottom} x2={W - padRight} y2={H - padBottom} stroke="#c9c5b8" strokeWidth={0.5} />
+      <Line x1={padLeft} y1={padTop} x2={padLeft} y2={H - padBottom} stroke="#c9c5b8" strokeWidth={0.5} />
+
+      {xTicks.map((t, i) => (
+        <React.Fragment key={`xt-${i}`}>
+          <Line x1={sx(t)} y1={H - padBottom} x2={sx(t)} y2={H - padBottom + 3} stroke="#c9c5b8" strokeWidth={0.5} />
+          <Text x={sx(t)} y={H - padBottom + 11} style={{ fontSize: 5.5, fill: "#8a8578", textAnchor: "middle" }}>
+            {t.toFixed(0)}
+          </Text>
+        </React.Fragment>
+      ))}
+      {yTicks.map((t, i) => (
+        <React.Fragment key={`yt-${i}`}>
+          <Line x1={padLeft - 3} y1={sy(t)} x2={padLeft} y2={sy(t)} stroke="#c9c5b8" strokeWidth={0.5} />
+          <Text x={padLeft - 5} y={sy(t) + 2} style={{ fontSize: 5.5, fill: "#8a8578", textAnchor: "end" }}>
+            {t.toFixed(0)}
+          </Text>
+        </React.Fragment>
+      ))}
+
+      <Text x={(padLeft + W - padRight) / 2} y={H - 4} style={{ fontSize: 6, fill: "#8a8578", textAnchor: "middle" }}>
+        x ({unit})
+      </Text>
+
       {ellipses.map((e, i) => (
         <Path key={e.percentile} d={ellipseSvgPath(e, sx, sy)} stroke={colors[i]} strokeWidth={i === 2 ? 1.4 : 1} fill="none" />
       ))}
@@ -124,7 +154,7 @@ export default function MeasurementReport({ patient, measurement, population, bo
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
           <View>
-            <Text style={styles.brandLabel}>BIVA Platform — Dott. Mauro Saiglia</Text>
+            <Text style={styles.brandLabel}>BIVA Platform - Dott. Mauro Saiglia</Text>
             <Text style={styles.title}>Referto BIVA</Text>
           </View>
           <View style={styles.metaRight}>
@@ -169,23 +199,23 @@ export default function MeasurementReport({ patient, measurement, population, bo
 
         <View style={{ flexDirection: "row", gap: 24 }}>
           <View style={{ width: 280 }}>
-            <Text style={styles.sectionTitle}>Grafico RXc — BIVA classica</Text>
+            <Text style={styles.sectionTitle}>Grafico RXc - BIVA classica</Text>
             <Text style={{ fontSize: 8, color: "#8a8578", marginBottom: 6 }}>{population.label}</Text>
-            <RxcGraph pop={population} vector={vector} unit="Ω/m" />
+            <RxcGraph pop={population} vector={vector} unit="Ohm/m" />
           </View>
 
           <View style={{ flex: 1 }}>
             <Text style={styles.sectionTitle}>Valori misurati</Text>
-            <View style={styles.row}><Text style={styles.rowLabel}>Resistenza (R)</Text><Text style={styles.rowValue}>{measurement.resistanceOhm.toFixed(1)} Ω</Text></View>
-            <View style={styles.row}><Text style={styles.rowLabel}>Reattanza (Xc)</Text><Text style={styles.rowValue}>{measurement.reactanceOhm.toFixed(1)} Ω</Text></View>
-            <View style={styles.row}><Text style={styles.rowLabel}>R/H</Text><Text style={styles.rowValue}>{measurement.rH.toFixed(1)} Ω/m</Text></View>
-            <View style={styles.row}><Text style={styles.rowLabel}>Xc/H</Text><Text style={styles.rowValue}>{measurement.xcH.toFixed(1)} Ω/m</Text></View>
+            <View style={styles.row}><Text style={styles.rowLabel}>Resistenza (R)</Text><Text style={styles.rowValue}>{measurement.resistanceOhm.toFixed(1)} Ohm</Text></View>
+            <View style={styles.row}><Text style={styles.rowLabel}>Reattanza (Xc)</Text><Text style={styles.rowValue}>{measurement.reactanceOhm.toFixed(1)} Ohm</Text></View>
+            <View style={styles.row}><Text style={styles.rowLabel}>R/H</Text><Text style={styles.rowValue}>{measurement.rH.toFixed(1)} Ohm/m</Text></View>
+            <View style={styles.row}><Text style={styles.rowLabel}>Xc/H</Text><Text style={styles.rowValue}>{measurement.xcH.toFixed(1)} Ohm/m</Text></View>
             <View style={styles.row}><Text style={styles.rowLabel}>Angolo di fase</Text><Text style={styles.rowValue}>{measurement.phaseAngleComputed.toFixed(2)}°</Text></View>
 
             <View style={{ marginTop: 14 }}>
               <Text style={styles.sectionTitle}>Classificazione</Text>
               <Text style={[styles.badge, { backgroundColor: statusColor }]}>
-                {classification.pattern ? PATTERN_LABELS[classification.pattern] ?? classification.pattern : "—"}
+                {classification.pattern ? PATTERN_LABELS[classification.pattern] ?? classification.pattern : " - "}
               </Text>
               <Text style={{ fontSize: 8, color: "#8a8578", marginTop: 6 }}>
                 {classification.withinEllipse50 ? "Entro il 50% della popolazione di riferimento" :
@@ -210,11 +240,11 @@ export default function MeasurementReport({ patient, measurement, population, bo
 
         <Text style={styles.citation}>
           Vettore BIVA calcolato senza equazioni predittive (Piccoli A, et al. Kidney Int. 1994;46:534-539), posizionato rispetto a: {population.sourceCitation}
-          {bodyComposition && " Stime quantitative da equazioni di regressione pubblicate (Sun et al. 2003; ESPEN/Kyle et al. 2004; Dittmar & Reber 2001) — vedi documentazione per dettagli e limiti."}
+          {bodyComposition && " Stime quantitative da equazioni di regressione pubblicate (Sun et al. 2003; ESPEN/Kyle et al. 2004; Dittmar & Reber 2001) - vedi documentazione per dettagli e limiti."}
         </Text>
 
         <Text style={styles.footer} fixed>
-          BIVA Platform — sviluppata dal Dott. Mauro Saiglia — Documento generato automaticamente, non sostituisce il giudizio clinico
+          BIVA Platform - sviluppata dal Dott. Mauro Saiglia - Documento generato automaticamente, non sostituisce il giudizio clinico
         </Text>
       </Page>
     </Document>
