@@ -7,7 +7,11 @@ export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session?.user) return NextResponse.json({ error: "Non autenticato" }, { status: 401 });
 
+  const userId = (session.user as { id: string }).id;
+  const role = (session.user as { role?: string }).role;
+
   const patients = await prisma.patient.findMany({
+    where: role === "admin" ? undefined : { createdById: userId },
     orderBy: { lastName: "asc" },
     include: { _count: { select: { measurements: true } } },
   });
