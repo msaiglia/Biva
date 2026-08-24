@@ -1,9 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { toleranceEllipse, type ReferencePopulation, type BivaMethod } from "@/lib/biva-engine";
-import Footer from "@/components/Footer";
+import AppShell from "@/components/AppShell";
 
 interface PopulationDTO {
   id: string;
@@ -53,13 +52,8 @@ export default function ComparisonClient({ populations, patients }: { population
   }
 
   return (
-    <main style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 24px", fontFamily: "'IBM Plex Sans', -apple-system, sans-serif", color: "#2a2a28" }}>
-      <div className="nav-bar" style={{ display: "flex", gap: 20, fontSize: 13, marginBottom: 24, paddingBottom: 14, borderBottom: "1px solid #e5e2d8", flexWrap: "wrap" }}>
-        <Link href="/pazienti" style={{ color: "#5a564c", textDecoration: "none" }}>Pazienti</Link>
-        <Link href="/misurazione" style={{ color: "#5a564c", textDecoration: "none" }}>Calcolatore</Link>
-        <Link href="/confronto" style={{ color: "#2a2a28", textDecoration: "none", fontWeight: 600 }}>Confronto</Link>
-      </div>
-
+    <AppShell>
+    <main style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 24px 60px", fontFamily: "'IBM Plex Sans', -apple-system, sans-serif", color: "#2a2a28" }}>
       <h1 style={{ fontSize: 24, marginBottom: 24 }}>Confronto multi-paziente</h1>
 
       <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
@@ -101,9 +95,8 @@ export default function ComparisonClient({ populations, patients }: { population
           <ComparisonGraph population={activePop} patients={visiblePatients} />
         </div>
       )}
-
-      <Footer />
     </main>
+    </AppShell>
   );
 }
 

@@ -10,7 +10,10 @@ export default async function PazientiPage() {
 
   const patients = await prisma.patient.findMany({
     orderBy: { lastName: "asc" },
-    include: { _count: { select: { measurements: true } } },
+    include: {
+      _count: { select: { measurements: true } },
+      measurements: { orderBy: { measuredAt: "desc" }, take: 1 },
+    },
   });
 
   const dto = patients.map((p) => ({
@@ -21,7 +24,19 @@ export default async function PazientiPage() {
     birthDate: p.birthDate.toISOString(),
     clinicalNote: p.clinicalNote,
     measurementCount: p._count.measurements,
+    lastPattern: p.measurements[0]?.bivaPattern ?? null,
+    lastMeasuredAt: p.measurements[0]?.measuredAt.toISOString() ?? null,
   }));
 
-  return <PatientListClient patients={dto} userName={session?.user?.name ?? session?.user?.email ?? ""} />;
+  const totalMeasurements = patients.reduce((sum, p) => sum + p._count.measurements, 0);
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 3600 * 1000);
+  const recentMeasurements = await prisma.measurement.count({ where: { measuredAt: { gte: thirtyDaysAgo } } });
+
+  return (
+    <PatientListClient
+      patients={dto}
+      userName={session?.user?.name ?? session?.user?.email ?? ""}
+      stats={{ totalPatients: patients.length, totalMeasurements, recentMeasurements }}
+    />
+  );
 }

@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { signOut } from "next-auth/react";
 import Link from "next/link";
-import Footer from "@/components/Footer";
+import AppShell from "@/components/AppShell";
+import { COLORS } from "@/components/Sidebar";
 
 interface PatientDTO {
   id: string;
@@ -14,68 +14,174 @@ interface PatientDTO {
   birthDate: string;
   clinicalNote: string | null;
   measurementCount: number;
+  lastPattern: string | null;
+  lastMeasuredAt: string | null;
 }
 
-export default function PatientListClient({ patients, userName }: { patients: PatientDTO[]; userName: string }) {
+interface Stats {
+  totalPatients: number;
+  totalMeasurements: number;
+  recentMeasurements: number;
+}
+
+const PATTERN_LABELS: Record<string, string> = {
+  normale: "Normale",
+  disidratazione: "Disidratazione",
+  "iperidratazione-edema": "Iperidratazione",
+  "massa-cellulare-aumentata": "Massa cell. aumentata",
+  "massa-cellulare-ridotta": "Massa cell. ridotta",
+  "disidratazione-massa-aumentata": "Disidr. + massa aum.",
+  "iperidratazione-massa-ridotta": "Iperidr. + massa rid.",
+};
+
+const AVATAR_PALETTE = ["#0f6e8c", "#2d8f6f", "#8a6d3b", "#7a5ca3", "#3b7ac2", "#c2673b"];
+
+function avatarColor(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return AVATAR_PALETTE[Math.abs(hash) % AVATAR_PALETTE.length];
+}
+
+function initials(firstName: string, lastName: string): string {
+  return `${lastName[0] ?? ""}${firstName[0] ?? ""}`.toUpperCase();
+}
+
+function age(birthDate: string): number {
+  const diff = Date.now() - new Date(birthDate).getTime();
+  return Math.floor(diff / (365.25 * 24 * 3600 * 1000));
+}
+
+function patternColor(pattern: string | null): { fg: string; bg: string } {
+  if (!pattern) return { fg: COLORS.textMuted, bg: "#f1f3f5" };
+  if (pattern === "normale") return { fg: COLORS.success, bg: COLORS.successBg };
+  if (pattern.includes("disidratazione") || pattern.includes("iperidratazione")) return { fg: COLORS.danger, bg: COLORS.dangerBg };
+  return { fg: COLORS.warning, bg: COLORS.warningBg };
+}
+
+export default function PatientListClient({ patients, userName, stats }: { patients: PatientDTO[]; userName: string; stats: Stats }) {
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
+  const [search, setSearch] = useState("");
 
-  function age(birthDate: string) {
-    const diff = Date.now() - new Date(birthDate).getTime();
-    return Math.floor(diff / (365.25 * 24 * 3600 * 1000));
-  }
+  const filtered = patients.filter((p) =>
+    `${p.lastName} ${p.firstName}`.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
-    <main style={{ maxWidth: 900, margin: "0 auto", padding: "32px 24px", fontFamily: "'IBM Plex Sans', -apple-system, sans-serif", color: "#2a2a28" }}>
-      <NavBar userName={userName} />
-
-      <div className="responsive-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
-        <div>
-          <h1 style={{ fontSize: 24, margin: 0 }}>Pazienti</h1>
+    <AppShell userName={userName}>
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 24px 60px", fontFamily: "'IBM Plex Sans', -apple-system, sans-serif", color: COLORS.text }}>
+        <div className="responsive-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28, flexWrap: "wrap", gap: 12 }}>
+          <h1 style={{ fontSize: 26, margin: 0, fontWeight: 700 }}>Pazienti</h1>
+          <button onClick={() => setShowForm(!showForm)} style={primaryButton}>
+            {showForm ? "Annulla" : "+ Nuovo paziente"}
+          </button>
         </div>
-        <button onClick={() => setShowForm(!showForm)} style={primaryButton}>
-          {showForm ? "Annulla" : "+ Nuovo paziente"}
-        </button>
+
+        {/* Statistiche */}
+        <div className="responsive-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 28 }}>
+          <StatCard label="Pazienti totali" value={stats.totalPatients} />
+          <StatCard label="Misurazioni totali" value={stats.totalMeasurements} />
+          <StatCard label="Misurazioni (ultimi 30gg)" value={stats.recentMeasurements} accent />
+        </div>
+
+        {showForm && <NewPatientForm onCreated={() => { setShowForm(false); router.refresh(); }} />}
+
+        {patients.length > 0 && (
+          <input
+            type="text"
+            placeholder="Cerca paziente..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ ...inputStyle, maxWidth: 320, marginBottom: 20 }}
+          />
+        )}
+
+        {patients.length === 0 ? (
+          <div style={{ padding: 40, background: COLORS.surface, borderRadius: 10, fontSize: 13, color: COLORS.textMuted, textAlign: "center", border: `1px solid ${COLORS.border}` }}>
+            Nessun paziente ancora registrato. Comincia creandone uno.
+          </div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 14 }}>
+            {filtered.map((p) => {
+              const pc = patternColor(p.lastPattern);
+              return (
+                <Link
+                  key={p.id}
+                  href={`/pazienti/${p.id}`}
+                  style={{
+                    display: "block",
+                    background: COLORS.surface,
+                    border: `1px solid ${COLORS.border}`,
+                    borderRadius: 10,
+                    padding: 18,
+                    textDecoration: "none",
+                    color: COLORS.text,
+                    transition: "box-shadow 0.15s",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+                    <div
+                      style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: "50%",
+                        background: avatarColor(p.lastName + p.firstName),
+                        color: "#fff",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: 14,
+                        fontWeight: 700,
+                        flexShrink: 0,
+                      }}
+                    >
+                      {initials(p.firstName, p.lastName)}
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {p.lastName} {p.firstName}
+                      </div>
+                      <div style={{ fontSize: 12, color: COLORS.textMuted }}>
+                        {p.sex === "M" ? "Uomo" : "Donna"} · {age(p.birthDate)} anni
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 600,
+                        padding: "3px 9px",
+                        borderRadius: 12,
+                        color: pc.fg,
+                        background: pc.bg,
+                      }}
+                    >
+                      {p.lastPattern ? PATTERN_LABELS[p.lastPattern] ?? p.lastPattern : "Nessuna misurazione"}
+                    </span>
+                    <span style={{ fontSize: 11, color: COLORS.textMuted }}>{p.measurementCount} mis.</span>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+
+        <div style={{ marginTop: 48, paddingTop: 16, borderTop: `1px solid ${COLORS.border}`, fontSize: 11, color: "#a0aab3", textAlign: "center" }}>
+          BIVA Platform — sviluppata dal Dott. Mauro Saiglia
+        </div>
       </div>
+    </AppShell>
+  );
+}
 
-      {showForm && <NewPatientForm onCreated={() => { setShowForm(false); router.refresh(); }} />}
-
-      {patients.length === 0 ? (
-        <div style={{ padding: 24, background: "#f5f3ee", borderRadius: 4, fontSize: 13, color: "#8a8578" }}>
-          Nessun paziente ancora registrato.
-        </div>
-      ) : (
-        <div className="table-scroll">
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-          <thead>
-            <tr style={{ borderBottom: "1px solid #e5e2d8", textAlign: "left" }}>
-              <th style={th}>Nome</th>
-              <th style={th}>Sesso</th>
-              <th style={th}>Età</th>
-              <th style={th}>Misurazioni</th>
-              <th style={th}></th>
-            </tr>
-          </thead>
-          <tbody>
-            {patients.map((p) => (
-              <tr key={p.id} style={{ borderBottom: "1px solid #eeece5" }}>
-                <td style={td}>{p.lastName} {p.firstName}</td>
-                <td style={td}>{p.sex === "M" ? "Uomo" : "Donna"}</td>
-                <td style={td}>{age(p.birthDate)}</td>
-                <td style={td}>{p.measurementCount}</td>
-                <td style={{ ...td, textAlign: "right" }}>
-                  <Link href={`/pazienti/${p.id}`} style={{ color: "#4a7ab5", textDecoration: "none", fontSize: 12 }}>
-                    Apri →
-                  </Link>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        </div>
-      )}
-      <Footer />
-    </main>
+function StatCard({ label, value, accent }: { label: string; value: number; accent?: boolean }) {
+  return (
+    <div style={{ background: accent ? COLORS.primaryLight : COLORS.surface, border: `1px solid ${accent ? COLORS.primary + "33" : COLORS.border}`, borderRadius: 10, padding: "16px 18px" }}>
+      <div style={{ fontSize: 24, fontWeight: 700, color: accent ? COLORS.primary : COLORS.text }}>{value}</div>
+      <div style={{ fontSize: 12, color: COLORS.textMuted, marginTop: 2 }}>{label}</div>
+    </div>
   );
 }
 
@@ -107,7 +213,7 @@ function NewPatientForm({ onCreated }: { onCreated: () => void }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ background: "#fff", border: "1px solid #e5e2d8", borderRadius: 4, padding: 20, marginBottom: 24 }}>
+    <form onSubmit={handleSubmit} style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 10, padding: 20, marginBottom: 24 }}>
       <div className="responsive-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
         <Field label="Nome"><input required value={firstName} onChange={(e) => setFirstName(e.target.value)} style={inputStyle} /></Field>
         <Field label="Cognome"><input required value={lastName} onChange={(e) => setLastName(e.target.value)} style={inputStyle} /></Field>
@@ -122,7 +228,7 @@ function NewPatientForm({ onCreated }: { onCreated: () => void }) {
       <Field label="Nota clinica (opzionale — es. IRC, oncologico, atleta)">
         <input value={clinicalNote} onChange={(e) => setClinicalNote(e.target.value)} style={inputStyle} />
       </Field>
-      {error && <div style={{ fontSize: 13, color: "#b23a3a", marginTop: 10 }}>{error}</div>}
+      {error && <div style={{ fontSize: 13, color: COLORS.danger, marginTop: 10 }}>{error}</div>}
       <button type="submit" disabled={loading} style={{ ...primaryButton, marginTop: 14 }}>
         {loading ? "Salvataggio..." : "Salva paziente"}
       </button>
@@ -130,35 +236,14 @@ function NewPatientForm({ onCreated }: { onCreated: () => void }) {
   );
 }
 
-function NavBar({ userName }: { userName: string }) {
-  return (
-    <div className="nav-bar" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, paddingBottom: 14, borderBottom: "1px solid #e5e2d8", flexWrap: "wrap", gap: 10 }}>
-      <div style={{ display: "flex", gap: 20, fontSize: 13, flexWrap: "wrap" }}>
-        <Link href="/pazienti" style={{ color: "#2a2a28", textDecoration: "none", fontWeight: 600 }}>Pazienti</Link>
-        <Link href="/misurazione" style={{ color: "#5a564c", textDecoration: "none" }}>Calcolatore</Link>
-        <Link href="/confronto" style={{ color: "#5a564c", textDecoration: "none" }}>Confronto</Link>
-        <Link href="/admin/popolazioni" style={{ color: "#5a564c", textDecoration: "none" }}>Popolazioni</Link>
-      </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 12, color: "#8a8578" }}>
-        <span>{userName}</span>
-        <button onClick={() => signOut({ callbackUrl: "/login" })} style={{ background: "none", border: "1px solid #c9c5b8", borderRadius: 3, padding: "4px 10px", cursor: "pointer", fontSize: 12, color: "#5a564c" }}>
-          Esci
-        </button>
-      </div>
-    </div>
-  );
-}
-
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label style={{ display: "block", fontSize: 12, color: "#5a564c", marginBottom: 4 }}>{label}</label>
+      <label style={{ display: "block", fontSize: 12, color: COLORS.textMuted, marginBottom: 4 }}>{label}</label>
       {children}
     </div>
   );
 }
 
-const th: React.CSSProperties = { padding: "8px 4px", color: "#8a8578", fontWeight: 500, fontSize: 12 };
-const td: React.CSSProperties = { padding: "10px 4px" };
-const inputStyle: React.CSSProperties = { width: "100%", padding: "8px 10px", border: "1px solid #c9c5b8", borderRadius: 3, fontSize: 13, boxSizing: "border-box" };
-const primaryButton: React.CSSProperties = { padding: "8px 16px", borderRadius: 3, border: "none", background: "#2a2a28", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" };
+const inputStyle: React.CSSProperties = { width: "100%", padding: "9px 12px", border: `1px solid ${COLORS.border}`, borderRadius: 6, fontSize: 13, boxSizing: "border-box" };
+const primaryButton: React.CSSProperties = { padding: "9px 18px", borderRadius: 6, border: "none", background: COLORS.primary, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" };

@@ -1,10 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { signOut } from "next-auth/react";
-import Footer from "@/components/Footer";
+import AppShell from "@/components/AppShell";
 import {
   normalizeClassic,
   computeSpecificVector,
@@ -209,19 +207,8 @@ export default function MeasurementForm({
   }
 
   return (
-    <main style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 24px", color: "#2a2a28", fontFamily: "'IBM Plex Sans', -apple-system, sans-serif" }}>
-      <div className="nav-bar" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, paddingBottom: 14, borderBottom: "1px solid #e5e2d8", flexWrap: "wrap", gap: 10 }}>
-        <div style={{ display: "flex", gap: 20, fontSize: 13, flexWrap: "wrap" }}>
-          <Link href="/pazienti" style={{ color: "#5a564c", textDecoration: "none" }}>Pazienti</Link>
-          <Link href="/misurazione" style={{ color: "#2a2a28", textDecoration: "none", fontWeight: 600 }}>Calcolatore</Link>
-          <Link href="/confronto" style={{ color: "#5a564c", textDecoration: "none" }}>Confronto</Link>
-          <Link href="/admin/popolazioni" style={{ color: "#5a564c", textDecoration: "none" }}>Popolazioni</Link>
-        </div>
-        <button onClick={() => signOut({ callbackUrl: "/login" })} style={{ background: "none", border: "1px solid #c9c5b8", borderRadius: 3, padding: "4px 10px", cursor: "pointer", fontSize: 12, color: "#5a564c" }}>
-          Esci
-        </button>
-      </div>
-
+    <AppShell>
+    <main style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 24px 60px", color: "#2a2a28", fontFamily: "'IBM Plex Sans', -apple-system, sans-serif" }}>
       <div className="responsive-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
         <div>
           <div style={{ fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", color: "#8a8578", marginBottom: 6 }}>
@@ -369,8 +356,8 @@ export default function MeasurementForm({
           </div>
         </div>
       </div>
-      <Footer />
     </main>
+    </AppShell>
   );
 }
 

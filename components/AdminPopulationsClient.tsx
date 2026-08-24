@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import Footer from "@/components/Footer";
+import AppShell from "@/components/AppShell";
 
 interface PopulationRow {
   id: string;
@@ -95,14 +94,8 @@ export default function AdminPopulationsClient({ initialPopulations }: { initial
   }
 
   return (
-    <main style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 24px", fontFamily: "'IBM Plex Sans', -apple-system, sans-serif", color: "#2a2a28" }}>
-      <div className="nav-bar" style={{ display: "flex", gap: 20, fontSize: 13, marginBottom: 24, paddingBottom: 14, borderBottom: "1px solid #e5e2d8", flexWrap: "wrap" }}>
-        <Link href="/pazienti" style={{ color: "#5a564c", textDecoration: "none" }}>Pazienti</Link>
-        <Link href="/misurazione" style={{ color: "#5a564c", textDecoration: "none" }}>Calcolatore</Link>
-        <Link href="/confronto" style={{ color: "#5a564c", textDecoration: "none" }}>Confronto</Link>
-        <Link href="/admin/popolazioni" style={{ color: "#2a2a28", textDecoration: "none", fontWeight: 600 }}>Popolazioni</Link>
-      </div>
-
+    <AppShell>
+    <main style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 24px 60px", fontFamily: "'IBM Plex Sans', -apple-system, sans-serif", color: "#2a2a28" }}>
       <div className="responsive-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
         <div>
           <h1 style={{ fontSize: 24, margin: 0 }}>Popolazioni di riferimento</h1>
@@ -193,9 +186,8 @@ export default function AdminPopulationsClient({ initialPopulations }: { initial
         </tbody>
       </table>
       </div>
-
-      <Footer />
     </main>
+    </AppShell>
   );
 }
 

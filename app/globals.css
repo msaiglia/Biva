@@ -24,11 +24,26 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
+/* Sidebar: visibile fissa su desktop, sostituita da barra orizzontale
+   sticky sotto i 900px. */
+.sidebar-mobile {
+  display: none;
+}
+
 /* Layout a due colonne (form + grafico, elenco pazienti + grafico
-   confronto): passano a una colonna sola sotto i 900px. */
+   confronto), sidebar e margini generali: si adattano sotto i 900px. */
 @media (max-width: 900px) {
   .responsive-grid {
     grid-template-columns: 1fr !important;
+  }
+  .sidebar-desktop {
+    display: none !important;
+  }
+  .sidebar-mobile {
+    display: flex !important;
+  }
+  .app-content {
+    margin-left: 0 !important;
   }
 }
 
