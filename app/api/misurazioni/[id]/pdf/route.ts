@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { renderToBuffer } from "@react-pdf/renderer";
 import MeasurementReport from "@/lib/pdf/MeasurementReport";
-import { computeBodyComposition, type ReferencePopulation } from "@/lib/biva-engine";
+import { computeBodyComposition, computeBodyCompositionAthlete, type ReferencePopulation } from "@/lib/biva-engine";
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions);
@@ -36,13 +36,21 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   };
 
   const bodyComposition = measurement.weightKg
-    ? computeBodyComposition(
-        measurement.resistanceOhm,
-        measurement.reactanceOhm,
-        measurement.heightCm,
-        measurement.weightKg,
-        measurement.patient.sex as "M" | "F"
-      )
+    ? measurement.bodyCompositionMethod === "athlete"
+      ? computeBodyCompositionAthlete(
+          measurement.resistanceOhm,
+          measurement.reactanceOhm,
+          measurement.heightCm,
+          measurement.weightKg,
+          measurement.patient.sex as "M" | "F"
+        )
+      : computeBodyComposition(
+          measurement.resistanceOhm,
+          measurement.reactanceOhm,
+          measurement.heightCm,
+          measurement.weightKg,
+          measurement.patient.sex as "M" | "F"
+        )
     : null;
 
   let buffer: Buffer;
@@ -69,6 +77,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         },
         population: enginePop,
         bodyComposition,
+        bodyCompositionMethod: measurement.bodyCompositionMethod,
       }) as unknown as Parameters<typeof renderToBuffer>[0]
     );
   } catch (e) {

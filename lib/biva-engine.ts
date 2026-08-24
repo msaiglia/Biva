@@ -297,6 +297,68 @@ export function computeBodyComposition(
   };
 }
 
+/**
+ * Composizione corporea — modello ATLETI (Matias et al. 2016).
+ *
+ * A differenza del modello standard, qui ECW e ICW sono individualizzati
+ * (non un rapporto fisso di popolazione), derivati da equazioni di
+ * regressione specifiche validate su atleti di livello nazionale.
+ *
+ * Fonte: Matias CN, Santos DA, Júdice PB, Magalhães JP, Minderico CS,
+ * Fields DA, Lukaski HC, Sardinha LB, Silva AM. "Estimation of total body
+ * water and extracellular water with bioimpedance in athletes: A need for
+ * athlete-specific prediction models." Clin Nutr. 2016;35(2):468-474.
+ * DOI: 10.1016/j.clnu.2015.03.013
+ *
+ * Equazioni (Tabella 3 del paper, N=139, 92 uomini/47 donne):
+ *   TBW (L) = 0.286 + 0.195·(S²/R) + 0.385·Peso + 5.086·Sesso   (R²=0.93, SEE=2.42 kg)
+ *   ECW (L) = 1.579 + 0.055·(S²/R) + 0.127·Peso + 0.006·(S²/Xc) + 0.932·Sesso  (R²=0.84, SEE=1.33 kg)
+ *   ICW = TBW − ECW (stesso modello, per differenza — non una fonte separata)
+ * dove Sesso = 1 se uomo, 0 se donna; S = statura in cm; R, Xc in Ω.
+ *
+ * LIMITI dichiarati dagli autori (da rispettare nell'uso clinico):
+ * - Sviluppata e validata su 208 atleti di livello nazionale, 21.3±5.0 anni
+ *   (development n=139, cross-validation n=69) — non generalizzabile fuori
+ *   da popolazione sportiva giovane-adulta.
+ * - Intervalli di confidenza individuali ampi: TBW ±5.6 kg, ECW ±3.6/+4 kg,
+ *   ICW ±6 kg (95% LoA in cross-validation) — più adatta a monitorare un
+ *   trend nel tempo che a dare un singolo valore assoluto isolato.
+ * - BIA a 50kHz singola frequenza, stesso dato che raccogliamo già.
+ */
+export function computeBodyCompositionAthlete(
+  R: number,
+  Xc: number,
+  heightCm: number,
+  weightKg: number,
+  sex: Sex
+): BodyComposition {
+  const sexTerm = sex === "M" ? 1 : 0;
+  const resistanceIndex = (heightCm * heightCm) / R; // S²/R
+  const reactanceIndex = (heightCm * heightCm) / Xc; // S²/Xc
+
+  const tbwL = 0.286 + 0.195 * resistanceIndex + 0.385 * weightKg + 5.086 * sexTerm;
+  const ecwL = 1.579 + 0.055 * resistanceIndex + 0.127 * weightKg + 0.006 * reactanceIndex + 0.932 * sexTerm;
+  const icwL = tbwL - ecwL;
+
+  const HYDRATION_CONSTANT = 0.73;
+  const ffmKg = tbwL / HYDRATION_CONSTANT;
+  const fmKg = weightKg - ffmKg;
+
+  const xcp = seriesToParallelReactance(R, Xc);
+  const bcmKg = 1.898 * (heightCm * heightCm / xcp) - 0.051 * weightKg + 4.18 * sexTerm + 15.496;
+
+  return {
+    tbwL,
+    ffmKg,
+    fmKg,
+    ecwL,
+    icwL,
+    ecwToTbwPercent: (ecwL / tbwL) * 100,
+    icwToTbwPercent: (icwL / tbwL) * 100,
+    bcmKg,
+  };
+}
+
 // ---------------------------------------------------------------------
 // Geometria delle ellissi di tolleranza (Piccoli & Pastori 2002, Eq. 1a/2a)
 // Identica per entrambi i metodi: opera sui campi generici meanX/sdX/meanY/sdY.

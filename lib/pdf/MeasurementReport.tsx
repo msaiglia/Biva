@@ -142,9 +142,10 @@ export interface MeasurementReportProps {
   };
   population: ReferencePopulation;
   bodyComposition: BodyComposition | null;
+  bodyCompositionMethod?: string;
 }
 
-export default function MeasurementReport({ patient, measurement, population, bodyComposition }: MeasurementReportProps) {
+export default function MeasurementReport({ patient, measurement, population, bodyComposition, bodyCompositionMethod }: MeasurementReportProps) {
   const age = Math.floor((new Date(measurement.measuredAt).getTime() - new Date(patient.birthDate).getTime()) / (365.25 * 24 * 3600 * 1000));
   const vector: Vector2D = { x: measurement.rH, y: measurement.xcH };
   const classification = classifyVector(vector, population);
@@ -232,7 +233,12 @@ export default function MeasurementReport({ patient, measurement, population, bo
 
         {bodyComposition && (
           <View style={{ marginTop: 20 }}>
-            <Text style={styles.sectionTitle}>Stime quantitative</Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 }}>
+              <Text style={styles.sectionTitle}>Stime quantitative</Text>
+              <Text style={{ fontSize: 7, color: "#8a8578" }}>
+                ({bodyCompositionMethod === "athlete" ? "equazioni atleti — Matias 2016" : "equazioni standard — Sun 2003"})
+              </Text>
+            </View>
             {bmi !== null && (
               <View style={styles.row}><Text style={styles.rowLabel}>Indice di Massa Corporea (BMI)</Text><Text style={styles.rowValue}>{bmi.toFixed(1)} kg/m2 ({bmiCategory(bmi)})</Text></View>
             )}
@@ -247,7 +253,10 @@ export default function MeasurementReport({ patient, measurement, population, bo
 
         <Text style={styles.citation}>
           Vettore BIVA calcolato senza equazioni predittive (Piccoli A, et al. Kidney Int. 1994;46:534-539), posizionato rispetto a: {population.sourceCitation}
-          {bodyComposition && " Stime quantitative da equazioni di regressione pubblicate (Sun et al. 2003; ESPEN/Kyle et al. 2004; Dittmar & Reber 2001) - vedi documentazione per dettagli e limiti."}
+          {bodyComposition && bodyCompositionMethod === "athlete" &&
+            " Stime quantitative (TBW, ECW, ICW) da equazioni specifiche per atleti (Matias et al., Clin Nutr 2016;35:468-474), validate su 208 atleti di livello nazionale 21±5 anni - intervalli di confidenza individuali ampi, vedi documentazione. FFM da TBW/0.73 (ESPEN/Kyle et al. 2004)."}
+          {bodyComposition && bodyCompositionMethod !== "athlete" &&
+            " Stime quantitative da equazioni di regressione pubblicate (Sun et al. 2003; ESPEN/Kyle et al. 2004; Dittmar & Reber 2001) - vedi documentazione per dettagli e limiti."}
           {bmi !== null && " BMI classificato secondo OMS/WHO (Technical Report Series 894, 2000): sottopeso <18.5, normopeso 18.5-24.9, sovrappeso 25-29.9, obesità >=30."}
         </Text>
 

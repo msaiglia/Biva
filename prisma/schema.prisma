@@ -67,6 +67,13 @@ model Measurement {
   rSp                Float? // Rsp, Ohm*cm
   xcSp               Float? // Xcsp, Ohm*cm
   bivaPatternSpecific String?
+  // Quale set di equazioni è stato usato per TBW/ECW/ICW/FFM/FM/BCM:
+  // "standard" (Sun 2003 + rapporto fisso Moissl 2006, popolazione generale)
+  // oppure "athlete" (Matias et al. 2016, individualizzato, validato su
+  // atleti di livello nazionale 21±5 anni — vedi lib/biva-engine.ts).
+  // Salvato per misurazione: una modifica successiva del metodo di default
+  // non deve alterare retroattivamente referti già generati.
+  bodyCompositionMethod String @default("standard")
   notes              String?
   createdAt          DateTime           @default(now())
 

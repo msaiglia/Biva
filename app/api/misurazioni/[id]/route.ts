@@ -32,6 +32,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     waistCircumferenceCm,
     calfCircumferenceCm,
     referencePopulationId,
+    bodyCompositionMethod,
     notes,
   } = body;
 
@@ -77,6 +78,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       phaseAngleComputed: paComputed,
       referencePopulationId,
       bivaPattern: classification.pattern,
+      bodyCompositionMethod: bodyCompositionMethod === "athlete" ? "athlete" : "standard",
       notes: notes || null,
     },
   });

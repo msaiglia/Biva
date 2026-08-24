@@ -5,7 +5,7 @@ import { authOptions } from "@/lib/auth";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
 import { COLORS } from "@/components/Sidebar";
-import { computeBodyComposition } from "@/lib/biva-engine";
+import { computeBodyComposition, computeBodyCompositionAthlete } from "@/lib/biva-engine";
 import { bmiCategory } from "@/lib/reference-ranges";
 import RxcVectorGraph from "@/components/RxcVectorGraph";
 
@@ -37,13 +37,21 @@ export default async function MeasurementViewPage({ params }: { params: Promise<
   );
 
   const bc = measurement.weightKg
-    ? computeBodyComposition(
-        measurement.resistanceOhm,
-        measurement.reactanceOhm,
-        measurement.heightCm,
-        measurement.weightKg,
-        measurement.patient.sex as "M" | "F"
-      )
+    ? measurement.bodyCompositionMethod === "athlete"
+      ? computeBodyCompositionAthlete(
+          measurement.resistanceOhm,
+          measurement.reactanceOhm,
+          measurement.heightCm,
+          measurement.weightKg,
+          measurement.patient.sex as "M" | "F"
+        )
+      : computeBodyComposition(
+          measurement.resistanceOhm,
+          measurement.reactanceOhm,
+          measurement.heightCm,
+          measurement.weightKg,
+          measurement.patient.sex as "M" | "F"
+        )
     : null;
   const bmi = measurement.weightKg
     ? measurement.weightKg / ((measurement.heightCm / 100) * (measurement.heightCm / 100))
@@ -133,7 +141,7 @@ export default async function MeasurementViewPage({ params }: { params: Promise<
         </Section>
 
         {bc && bmi !== null && (
-          <Section title="Stime quantitative">
+          <Section title={`Stime quantitative (${measurement.bodyCompositionMethod === "athlete" ? "equazioni atleti — Matias 2016" : "equazioni standard — Sun 2003"})`}>
             <Row label="Indice di Massa Corporea (BMI)" value={`${bmi.toFixed(1)} kg/m² (${bmiCategory(bmi)})`} />
             <Row label="Acqua Totale (TBW)" value={`${bc.tbwL.toFixed(1)} l`} />
             <Row label="Acqua Extracellulare (ECW)" value={`${bc.ecwL.toFixed(1)} l (${bc.ecwToTbwPercent.toFixed(0)}% del TBW)`} />

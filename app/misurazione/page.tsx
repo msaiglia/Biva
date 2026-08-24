@@ -40,6 +40,7 @@ export default async function MisurazionePage({
     waistCircumferenceCm: number | null;
     calfCircumferenceCm: number | null;
     referencePopulationId: string;
+    bodyCompositionMethod: string;
   } | null = null;
 
   try {
@@ -65,6 +66,7 @@ export default async function MisurazionePage({
           waistCircumferenceCm: m.waistCircumferenceCm,
           calfCircumferenceCm: m.calfCircumferenceCm,
           referencePopulationId: m.referencePopulationId,
+          bodyCompositionMethod: m.bodyCompositionMethod,
         };
       }
     }

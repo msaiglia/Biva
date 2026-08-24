@@ -21,6 +21,7 @@ export async function POST(req: Request) {
     waistCircumferenceCm,
     calfCircumferenceCm,
     referencePopulationId,
+    bodyCompositionMethod,
     notes,
   } = body;
 
@@ -66,6 +67,7 @@ export async function POST(req: Request) {
       phaseAngleComputed: paComputed,
       referencePopulationId,
       bivaPattern: classification.pattern,
+      bodyCompositionMethod: bodyCompositionMethod === "athlete" ? "athlete" : "standard",
       notes: notes || null,
     },
   });

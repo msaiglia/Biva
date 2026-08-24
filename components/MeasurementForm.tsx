@@ -13,6 +13,7 @@ import {
   classifyVector,
   phaseAngleDeg,
   computeBodyComposition,
+  computeBodyCompositionAthlete,
   type ReferencePopulation,
   type Vector2D,
   type BivaMethod,
@@ -83,6 +84,7 @@ interface ExistingMeasurement {
   waistCircumferenceCm: number | null;
   calfCircumferenceCm: number | null;
   referencePopulationId: string;
+  bodyCompositionMethod: string;
 }
 
 export default function MeasurementForm({
@@ -107,6 +109,9 @@ export default function MeasurementForm({
   const [armCm, setArmCm] = useState<string>(existingMeasurement?.armCircumferenceCm ? String(existingMeasurement.armCircumferenceCm) : "");
   const [waistCm, setWaistCm] = useState<string>(existingMeasurement?.waistCircumferenceCm ? String(existingMeasurement.waistCircumferenceCm) : "");
   const [calfCm, setCalfCm] = useState<string>(existingMeasurement?.calfCircumferenceCm ? String(existingMeasurement.calfCircumferenceCm) : "");
+  const [bodyCompositionMethod, setBodyCompositionMethod] = useState<"standard" | "athlete">(
+    existingMeasurement?.bodyCompositionMethod === "athlete" ? "athlete" : "standard"
+  );
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [saveError, setSaveError] = useState("");
 
@@ -191,6 +196,7 @@ export default function MeasurementForm({
           waistCircumferenceCm: waistCm ? Number(waistCm) : undefined,
           calfCircumferenceCm: calfCm ? Number(calfCm) : undefined,
           referencePopulationId: classicPops.find((p) => p.code === activeClassicCode)?.id,
+          bodyCompositionMethod,
         }),
       });
       if (!res.ok) {
@@ -248,6 +254,19 @@ export default function MeasurementForm({
             <FieldRow label="Peso (kg) — opzionale">
               <input type="number" value={weightKg} onChange={(e) => setWeightKg(e.target.value)} style={inputStyle} placeholder="es. 75" />
             </FieldRow>
+            {weightKg && (
+              <FieldRow label="Equazioni acqua corporea (TBW/ECW/ICW)">
+                <div style={{ display: "flex", gap: 8 }}>
+                  <SexButton active={bodyCompositionMethod === "standard"} onClick={() => setBodyCompositionMethod("standard")}>Standard</SexButton>
+                  <SexButton active={bodyCompositionMethod === "athlete"} onClick={() => setBodyCompositionMethod("athlete")}>Atleta</SexButton>
+                </div>
+                <div style={{ fontSize: 11, color: "#8a8578", marginTop: 6 }}>
+                  {bodyCompositionMethod === "athlete"
+                    ? "Matias et al. 2016 — validata su atleti di livello nazionale (21±5 anni), ECW/ICW individualizzati."
+                    : "Sun et al. 2003 — popolazione generale. ECW/ICW da rapporto fisso di popolazione (non individualizzato)."}
+                </div>
+              </FieldRow>
+            )}
             <FieldRow label="Età (anni) — per i range di riferimento">
               <input type="number" value={age} onChange={(e) => setAge(e.target.value)} style={inputStyle} placeholder="es. 40" />
             </FieldRow>
@@ -349,7 +368,7 @@ export default function MeasurementForm({
           )}
 
           {weightKg ? (
-            <BodyCompositionPanel R={R} Xc={Xc} heightCm={heightCm} weightKg={Number(weightKg)} sex={sex} ageYears={Number(age) || 40} />
+            <BodyCompositionPanel R={R} Xc={Xc} heightCm={heightCm} weightKg={Number(weightKg)} sex={sex} ageYears={Number(age) || 40} method={bodyCompositionMethod} />
           ) : (
             <EmptyPanel text="Inserisci il peso corporeo per vedere le stime quantitative (TBW, FFM, FM, ECW, ICW)." />
           )}
@@ -378,6 +397,7 @@ function BodyCompositionPanel({
   weightKg,
   sex,
   ageYears,
+  method,
 }: {
   R: number;
   Xc: number;
@@ -385,11 +405,15 @@ function BodyCompositionPanel({
   weightKg: number;
   sex: "M" | "F";
   ageYears: number;
+  method: "standard" | "athlete";
 }) {
   const [refMode, setRefMode] = useState<"altezza" | "peso">("altezza");
   const bc = useMemo(
-    () => computeBodyComposition(R, Xc, heightCm, weightKg, sex),
-    [R, Xc, heightCm, weightKg, sex]
+    () =>
+      method === "athlete"
+        ? computeBodyCompositionAthlete(R, Xc, heightCm, weightKg, sex)
+        : computeBodyComposition(R, Xc, heightCm, weightKg, sex),
+    [R, Xc, heightCm, weightKg, sex, method]
   );
   const heightM = heightCm / 100;
 
@@ -407,8 +431,24 @@ function BodyCompositionPanel({
 
   return (
     <div style={{ background: "#fff", border: "1px solid #e5e2d8", borderRadius: 4, padding: 20 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-        <div style={{ fontSize: 15, fontWeight: 600 }}>Stime quantitative</div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, flexWrap: "wrap", gap: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ fontSize: 15, fontWeight: 600 }}>Stime quantitative</div>
+          <span
+            style={{
+              fontSize: 10,
+              fontWeight: 700,
+              textTransform: "uppercase",
+              letterSpacing: "0.03em",
+              padding: "2px 8px",
+              borderRadius: 10,
+              color: method === "athlete" ? "#0a4f63" : "#6b6558",
+              background: method === "athlete" ? "#e6f2f6" : "#f0eee7",
+            }}
+          >
+            {method === "athlete" ? "Equazioni atleti — Matias 2016" : "Equazioni standard — Sun 2003"}
+          </span>
+        </div>
         <div style={{ display: "flex", gap: 6 }}>
           <ToggleButton active={refMode === "altezza"} onClick={() => setRefMode("altezza")}>Riferimenti su altezza</ToggleButton>
           <ToggleButton active={refMode === "peso"} onClick={() => setRefMode("peso")}>Riferimenti su peso (%)</ToggleButton>
@@ -443,19 +483,36 @@ function BodyCompositionPanel({
       <RangeBar label="Indice Massa Grassa (FMI)" value={fmi} unit="kg/m²" zones={fmiRange(sex, ageYears)} />
       <RangeBar label="Acqua Totale (% peso corporeo)" value={tbwPercent} unit="%" zones={tbwPercentRange()} />
 
-      <div style={{ fontSize: 11, color: "#8a8578", marginTop: 4, marginBottom: 16, padding: "10px 12px", background: "#f7f9fa", borderRadius: 4 }}>
-        <strong>ECW, ICW e BCM non hanno zone colorate.</strong> Per ECW/ICW disponiamo solo di un rapporto medio di popolazione
-        (Moissl et al. 2006), non di una distribuzione con percentili individualizzabili. Per il BCM, la revisione sistematica più
-        recente (Kampo, Závodná &amp; Vondra, <em>Physiol Res</em> 2025, PMID 41511100) conferma una carenza di equazioni e range di
-        riferimento validati in letteratura per questo parametro — non è un limite di questa app, è un gap riconosciuto nel campo.
-      </div>
+      {method === "athlete" ? (
+        <div style={{ fontSize: 11, color: "#8a8578", marginTop: 4, marginBottom: 16, padding: "10px 12px", background: "#f7f9fa", borderRadius: 4 }}>
+          <strong>ECW/ICW individualizzati</strong> (equazioni Matias et al. 2016, non un rapporto fisso). Validate su 208 atleti di
+          livello nazionale (21±5 anni) — intervalli di confidenza individuali ampi (TBW ±5.6 kg, ECW ±3.6/+4 kg, ICW ±6 kg): più
+          adatte a monitorare un trend nel tempo che come singolo valore assoluto isolato. <strong>BCM non ha zone colorate</strong> —
+          la revisione sistematica più recente (Kampo, Závodná &amp; Vondra, <em>Physiol Res</em> 2025, PMID 41511100) conferma una
+          carenza di equazioni e range di riferimento validati in letteratura per questo parametro.
+        </div>
+      ) : (
+        <div style={{ fontSize: 11, color: "#8a8578", marginTop: 4, marginBottom: 16, padding: "10px 12px", background: "#f7f9fa", borderRadius: 4 }}>
+          <strong>ECW, ICW e BCM non hanno zone colorate.</strong> Per ECW/ICW disponiamo solo di un rapporto medio di popolazione
+          (Moissl et al. 2006), non di una distribuzione con percentili individualizzabili. Per il BCM, la revisione sistematica più
+          recente (Kampo, Závodná &amp; Vondra, <em>Physiol Res</em> 2025, PMID 41511100) conferma una carenza di equazioni e range di
+          riferimento validati in letteratura per questo parametro — non è un limite di questa app, è un gap riconosciuto nel campo.
+        </div>
+      )}
 
       <div style={{ fontSize: 11, color: "#8a8578", lineHeight: 1.6, borderTop: "1px solid #eeece5", paddingTop: 12 }}>
         <strong>Nota metodologica</strong> — a differenza del vettore BIVA sopra (nessuna equazione), questi sono
-        <strong> valori stimati</strong> tramite equazioni di regressione pubblicate: TBW da Sun et al., <em>Am J Clin Nutr</em> 2003
-        (DOI: 10.1093/ajcn/77.2.331); FFM derivata da TBW/0.73 (costante di idratazione, ESPEN/Kyle et al., <em>Clin Nutr</em> 2004,
-        DOI: 10.1016/j.clnu.2004.06.004); FFMI/FMI da Coin et al., <em>Clin Nutr</em> 2008 (PMID 18206273, popolazione italiana).
-        Software diversi (incluso il tuo dispositivo) possono dare numeri leggermente diversi a parità di R/Xc: è un limite noto
+        <strong> valori stimati</strong> tramite equazioni di regressione pubblicate.
+        {method === "athlete" ? (
+          <> TBW ed ECW da Matias et al., <em>Clin Nutr</em> 2016;35:468-474 (DOI: 10.1016/j.clnu.2015.03.013), ICW per differenza
+          (stesso modello); FFM derivata da TBW/0.73 (costante di idratazione, ESPEN/Kyle et al., <em>Clin Nutr</em> 2004);
+          FFMI/FMI da Coin et al., <em>Clin Nutr</em> 2008 (PMID 18206273, popolazione italiana — non specifica per atleti).</>
+        ) : (
+          <> TBW da Sun et al., <em>Am J Clin Nutr</em> 2003
+          (DOI: 10.1093/ajcn/77.2.331); FFM derivata da TBW/0.73 (costante di idratazione, ESPEN/Kyle et al., <em>Clin Nutr</em> 2004,
+          DOI: 10.1016/j.clnu.2004.06.004); FFMI/FMI da Coin et al., <em>Clin Nutr</em> 2008 (PMID 18206273, popolazione italiana).</>
+        )}
+        {" "}Software diversi (incluso il tuo dispositivo) possono dare numeri leggermente diversi a parità di R/Xc: è un limite noto
         della letteratura, non un errore.
       </div>
     </div>
