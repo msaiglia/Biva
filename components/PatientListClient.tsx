@@ -34,12 +34,8 @@ const PATTERN_LABELS: Record<string, string> = {
   "iperidratazione-massa-ridotta": "Iperidr. + massa rid.",
 };
 
-const AVATAR_PALETTE = ["#0f6e8c", "#2d8f6f", "#8a6d3b", "#7a5ca3", "#3b7ac2", "#c2673b"];
-
-function avatarColor(name: string): string {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  return AVATAR_PALETTE[Math.abs(hash) % AVATAR_PALETTE.length];
+function avatarColor(sex: "M" | "F"): string {
+  return sex === "M" ? "#3b7ac2" : "#a35c8a";
 }
 
 const personSilhouette = (
@@ -128,7 +124,7 @@ export default function PatientListClient({ patients, userName, stats }: { patie
                         width: 40,
                         height: 40,
                         borderRadius: "50%",
-                        background: avatarColor(p.lastName + p.firstName),
+                        background: avatarColor(p.sex as "M" | "F"),
                         color: "#fff",
                         display: "flex",
                         alignItems: "center",
