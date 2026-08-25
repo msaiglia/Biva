@@ -164,3 +164,32 @@ export function ecwTbwRange(ageYears: number, sex: Sex, bmi: number): RangeZones
     sourceLabel: `Enderle et al. 2023 (Clin Nutr 42:644-652) — valore atteso età/sesso/BMI-specifico ±1-2 SEE (n=1958, adulti caucasici, non specifico per atleti)`,
   };
 }
+
+/**
+ * Valore ATTESO di ICW/TBW% — NON una fonte separata: è il complemento
+ * matematico di ecwTbwExpected (ICW/TBW = 100% - ECW/TBW per identità,
+ * dato che TBW = ECW + ICW). Stessa fonte (Enderle et al. 2023), stessi
+ * limiti (solo popolazione caucasica, non specifico per atleti).
+ */
+export function icwTbwExpected(ageYears: number, sex: Sex, bmi: number): number {
+  return 100 - ecwTbwExpected(ageYears, sex, bmi);
+}
+
+/**
+ * Fascia di riferimento ICW/TBW% — complemento matematico di ecwTbwRange
+ * (stesso SEE di Enderle et al. 2023: la varianza di 100%-X è identica
+ * alla varianza di X). Non introduce alcuna nuova assunzione statistica.
+ */
+export function icwTbwRange(ageYears: number, sex: Sex, bmi: number): RangeZones {
+  const expected = icwTbwExpected(ageYears, sex, bmi);
+  const see = sex === "M" ? 1.06 : 1.46;
+  return {
+    min: expected - 3 * see,
+    lowBoundary: expected - 2 * see,
+    normalLow: expected - see,
+    normalHigh: expected + see,
+    highBoundary: expected + 2 * see,
+    max: expected + 3 * see,
+    sourceLabel: `Enderle et al. 2023 (Clin Nutr 42:644-652) — complemento di ECW/TBW (100% − ECW/TBW atteso), stessa fonte e stesso errore standard`,
+  };
+}

@@ -7,7 +7,7 @@ import {
   type Vector2D,
   type BodyComposition,
 } from "@/lib/biva-engine";
-import { bmiCategory, ecwTbwExpected } from "@/lib/reference-ranges";
+import { bmiCategory, ecwTbwExpected, icwTbwExpected } from "@/lib/reference-ranges";
 
 const PATTERN_LABELS: Record<string, string> = {
   normale: "Normale",
@@ -158,6 +158,11 @@ export default function MeasurementReport({ patient, measurement, population, bo
       ? ecwTbwExpected(age, patient.sex as "M" | "F", bmi)
       : null;
   const ecwDeviation = ecwExpected !== null && bodyComposition ? bodyComposition.ecwToTbwPercent - ecwExpected : null;
+  const icwExpected =
+    bodyComposition && bmi !== null && bodyCompositionMethod !== "athlete"
+      ? icwTbwExpected(age, patient.sex as "M" | "F", bmi)
+      : null;
+  const icwDeviation = icwExpected !== null && bodyComposition ? bodyComposition.icwToTbwPercent - icwExpected : null;
 
   return (
     <Document>
@@ -249,7 +254,7 @@ export default function MeasurementReport({ patient, measurement, population, bo
             )}
             <View style={styles.row}><Text style={styles.rowLabel}>Acqua Totale (TBW)</Text><Text style={styles.rowValue}>{bodyComposition.tbwL.toFixed(1)} l</Text></View>
             <View style={styles.row}><Text style={styles.rowLabel}>Acqua Extracellulare (ECW)</Text><Text style={styles.rowValue}>{bodyComposition.ecwL.toFixed(1)} l ({bodyComposition.ecwToTbwPercent.toFixed(1)}% del TBW{ecwDeviation !== null ? `, atteso ${ecwExpected!.toFixed(1)}%, ${ecwDeviation >= 0 ? "+" : ""}${ecwDeviation.toFixed(1)}` : ""})</Text></View>
-            <View style={styles.row}><Text style={styles.rowLabel}>Acqua Intracellulare (ICW)</Text><Text style={styles.rowValue}>{bodyComposition.icwL.toFixed(1)} l ({bodyComposition.icwToTbwPercent.toFixed(0)}% del TBW)</Text></View>
+            <View style={styles.row}><Text style={styles.rowLabel}>Acqua Intracellulare (ICW)</Text><Text style={styles.rowValue}>{bodyComposition.icwL.toFixed(1)} l ({bodyComposition.icwToTbwPercent.toFixed(1)}% del TBW{icwDeviation !== null ? `, atteso ${icwExpected!.toFixed(1)}%, ${icwDeviation >= 0 ? "+" : ""}${icwDeviation.toFixed(1)}` : ""})</Text></View>
             <View style={styles.row}><Text style={styles.rowLabel}>Massa Magra (FFM)</Text><Text style={styles.rowValue}>{bodyComposition.ffmKg.toFixed(1)} kg</Text></View>
             <View style={styles.row}><Text style={styles.rowLabel}>Massa Grassa (FM)</Text><Text style={styles.rowValue}>{bodyComposition.fmKg.toFixed(1)} kg</Text></View>
             <View style={styles.row}><Text style={styles.rowLabel}>Massa Cellulare (BCM)</Text><Text style={styles.rowValue}>{bodyComposition.bcmKg.toFixed(1)} kg</Text></View>

@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import AppShell from "@/components/AppShell";
 import RangeBar from "@/components/RangeBar";
-import { ffmiRange, fmiRange, tbwPercentRange, bmiRange, bmiCategory, ecwTbwExpected, ecwTbwRange } from "@/lib/reference-ranges";
+import { ffmiRange, fmiRange, tbwPercentRange, bmiRange, bmiCategory, ecwTbwExpected, ecwTbwRange, icwTbwExpected, icwTbwRange } from "@/lib/reference-ranges";
 import {
   normalizeClassic,
   computeSpecificVector,
@@ -430,6 +430,8 @@ function BodyCompositionPanel({
   const bmi = weightKg / (heightM * heightM);
   const ecwExpected = method === "standard" ? ecwTbwExpected(ageYears, sex, bmi) : null;
   const ecwDeviation = ecwExpected !== null ? bc.ecwToTbwPercent - ecwExpected : null;
+  const icwExpected = method === "standard" ? icwTbwExpected(ageYears, sex, bmi) : null;
+  const icwDeviation = icwExpected !== null ? bc.icwToTbwPercent - icwExpected : null;
 
   return (
     <div style={{ background: "#fff", border: "1px solid #e5e2d8", borderRadius: 4, padding: 20 }}>
@@ -473,7 +475,11 @@ function BodyCompositionPanel({
         <BcRow
           label="Acqua Intracellulare (ICW)"
           value={`${bc.icwL.toFixed(1)} l`}
-          ref={`${bc.icwToTbwPercent.toFixed(0)}% del TBW`}
+          ref={
+            icwDeviation !== null
+              ? `${bc.icwToTbwPercent.toFixed(1)}% del TBW — atteso ${icwExpected!.toFixed(1)}% (${icwDeviation >= 0 ? "+" : ""}${icwDeviation.toFixed(1)})`
+              : `${bc.icwToTbwPercent.toFixed(0)}% del TBW`
+          }
         />
         <BcRow label="Massa Magra (FFM)" value={`${bc.ffmKg.toFixed(1)} kg`} ref={formatRef(bc.ffmKg, "kg")} />
         <BcRow label="Massa Grassa (FM)" value={`${bc.fmKg.toFixed(1)} kg`} ref={formatRef(bc.fmKg, "kg")} />
@@ -489,7 +495,10 @@ function BodyCompositionPanel({
       <RangeBar label="Indice Massa Grassa (FMI)" value={fmi} unit="kg/m²" zones={fmiRange(sex, ageYears)} />
       <RangeBar label="Acqua Totale (% peso corporeo)" value={tbwPercent} unit="%" zones={tbwPercentRange()} />
       {method === "standard" && (
-        <RangeBar label="Acqua Extracellulare (% TBW)" value={bc.ecwToTbwPercent} unit="%" zones={ecwTbwRange(ageYears, sex, bmi)} />
+        <>
+          <RangeBar label="Acqua Extracellulare (% TBW)" value={bc.ecwToTbwPercent} unit="%" zones={ecwTbwRange(ageYears, sex, bmi)} />
+          <RangeBar label="Acqua Intracellulare (% TBW)" value={bc.icwToTbwPercent} unit="%" zones={icwTbwRange(ageYears, sex, bmi)} />
+        </>
       )}
 
       {method === "athlete" ? (
@@ -502,14 +511,14 @@ function BodyCompositionPanel({
         </div>
       ) : (
         <div style={{ fontSize: 11, color: "#8a8578", marginTop: 4, marginBottom: 16, padding: "10px 12px", background: "#f7f9fa", borderRadius: 4 }}>
-          <strong>ECW e ICW individualizzate</strong> (Lukaski &amp; Bolonchuk 1988, non più un rapporto fisso di popolazione).{" "}
-          <strong>ECW ha ora una fascia colorata</strong> età/sesso/BMI-specifica (Enderle et al. 2023, <em>Clin Nutr</em> 42:644-652,
-          n=1958 adulti caucasici) — non una soglia unica per tutti, ma un valore atteso calcolato sui tuoi dati anagrafici, con lo
-          scostamento mostrato accanto al valore in litri. Solo per adulti caucasici, non specifico per atleti (per questo qui non
-          appare in modalità Atleta). <strong>ICW e BCM non hanno ancora una fascia colorata</strong>: per l'ICW nessun range
-          età/sesso-specifico verificato con lo stesso rigore; per il BCM, la revisione sistematica più recente (Kampo, Závodná &amp;
-          Vondra, <em>Physiol Res</em> 2025, PMID 41511100) conferma una carenza di equazioni e range di riferimento validati in
-          letteratura per questo parametro — non è un limite di questa app, è un gap riconosciuto nel campo.
+          <strong>ECW e ICW individualizzate</strong> (Lukaski &amp; Bolonchuk 1988, non più un rapporto fisso di popolazione),{" "}
+          <strong>entrambe con fascia colorata</strong> età/sesso/BMI-specifica (Enderle et al. 2023, <em>Clin Nutr</em> 42:644-652,
+          n=1958 adulti caucasici) — il valore atteso per ICW è il complemento matematico di quello per ECW (ICW/TBW% = 100% −
+          ECW/TBW%, stessa identità usata per calcolare i litri), non una fonte separata. Solo per adulti caucasici, non specifico per
+          atleti (per questo qui non appaiono in modalità Atleta). <strong>Il BCM non ha ancora una fascia colorata</strong>: la
+          revisione sistematica più recente (Kampo, Závodná &amp; Vondra, <em>Physiol Res</em> 2025, PMID 41511100) conferma una
+          carenza di equazioni e range di riferimento validati in letteratura per questo parametro — non è un limite di questa app, è
+          un gap riconosciuto nel campo.
         </div>
       )}
 
