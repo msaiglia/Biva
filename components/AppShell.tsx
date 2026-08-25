@@ -1,4 +1,5 @@
-import Sidebar, { COLORS } from "@/components/Sidebar";
+import Sidebar from "@/components/Sidebar";
+import { COLORS } from "@/lib/colors";
 
 export default function AppShell({ userName, children }: { userName?: string; children: React.ReactNode }) {
   return (

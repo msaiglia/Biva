@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
-import { COLORS } from "@/components/Sidebar";
+import { COLORS } from "@/lib/colors";
 import { computeBodyComposition, computeBodyCompositionAthlete } from "@/lib/biva-engine";
 import { bmiCategory } from "@/lib/reference-ranges";
 import RxcVectorGraph from "@/components/RxcVectorGraph";

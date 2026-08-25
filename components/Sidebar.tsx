@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
+import { COLORS } from "@/lib/colors";
+
+export { COLORS };
 
 const NAV_ITEMS = [
   { href: "/pazienti", label: "Pazienti", icon: "👥" },
@@ -10,23 +13,6 @@ const NAV_ITEMS = [
   { href: "/confronto", label: "Confronto", icon: "📊" },
   { href: "/admin/popolazioni", label: "Popolazioni", icon: "📚" },
 ];
-
-export const COLORS = {
-  primary: "#0f6e8c",
-  primaryDark: "#0a4f63",
-  primaryLight: "#e6f2f6",
-  bg: "#f7f9fa",
-  surface: "#ffffff",
-  text: "#1e2a32",
-  textMuted: "#64748b",
-  border: "#e2e8ee",
-  success: "#1d8a4d",
-  successBg: "#e8f6ee",
-  warning: "#c07a1a",
-  warningBg: "#fbf1e0",
-  danger: "#c23b3b",
-  dangerBg: "#fbecec",
-};
 
 export default function Sidebar({ userName }: { userName?: string }) {
   const pathname = usePathname();

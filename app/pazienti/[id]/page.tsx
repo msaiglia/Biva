@@ -5,7 +5,7 @@ import { authOptions } from "@/lib/auth";
 import Link from "next/link";
 import TrajectoryGraph from "@/components/TrajectoryGraph";
 import AppShell from "@/components/AppShell";
-import { COLORS } from "@/components/Sidebar";
+import { COLORS } from "@/lib/colors";
 import MeasurementRowActions from "@/components/MeasurementRowActions";
 import type { ReferencePopulation, BivaMethod } from "@/lib/biva-engine";
 
