@@ -138,3 +138,26 @@ Un blocco di commento in `lib/biva-engine.ts` (righe 219-227 prima della correzi
 1. Fascia colorata per **ICW assoluto** e **BCM** — nessuna fonte verificata trovata
 2. Fascia colorata **ECW/ICW per la modalità Atleta** — la fonte disponibile (Enderle 2023) non è validata su sportivi
 3. **BIVA specifica**: nessuna popolazione di riferimento con parametri (media/SD/r) ancora caricata nel database — il motore di calcolo la supporta, ma senza popolazioni di riferimento verificate non è utilizzabile in pratica
+
+---
+
+## 9. Validazione empirica contro referti Akern reali (dati aggregati, anonimi)
+
+Confronto tra il metodo Standard di questa app e referti Akern Bodygram reali (dispositivo con **algoritmi proprietari non pubblicati** — vedi manuale Bodygram Pro, che dichiara esplicitamente risultati diversi dalle equazioni pubblicate). Nessun nome paziente è conservato in questo repository.
+
+**Campione**: 9 soggetti reali (7 con dato Akern per FFMI/FMI, 2 con tabella assoluta completa TBW/ECW/ICW/FFM/FM/BCM).
+
+| Parametro | Risultato |
+|---|---|
+| BMI | Corrispondenza pressoché esatta su tutti i 9 (identità matematica, atteso) |
+| Angolo di fase | Corrispondenza pressoché esatta sui 2 casi con dato Akern disponibile (diff -0.00° e +0.01° — identità trigonometrica, atteso) |
+| FFMI | **N=7, tutti con differenza negativa** (media -0.45 kg/m², range -0.15/-0.75) — bias sistematico e direzionale, non rumore casuale |
+| FMI | Speculare a FFMI: tutti con differenza positiva |
+| TBW | 2/2 casi con differenza negativa, entro 1.2L — coerente con SEE pubblicato di Sun 2003 |
+| ECW | 2/2 casi con differenza negativa più marcata (-2.8 e -3.8 punti percentuali) |
+| ICW | Speculare a ECW (per costruzione, ICW=TBW-ECW) |
+| Idratazione (TBW/FFM) | La nostra app dà **sempre esattamente 73.0%** per costruzione matematica (FFM=TBW/0.73) — non è una misura indipendente. Akern oscilla realisticamente 72.8-73.6% per soggetto, suggerendo un percorso di calcolo diverso (non FFM=TBW/costante) |
+| **BCM** | Caso più critico: un soggetto obeso (BMI 34.6) ha mostrato uno scarto di **-13.4 kg** rispetto ad Akern — molto più ampio degli scarti già noti su soggetti anziani (0.3-4.5kg). Rafforza fortemente la cautela già documentata su questa equazione (Dittmar & Reber 2001, sviluppata su anziani magri): sembra deteriorarsi ulteriormente anche per obesità, non solo per età fuori range |
+
+**Interpretazione**: un algoritmo proprietario non pubblicato non è un metro di paragone assoluto — è una stima indipendente con il proprio errore, non il "valore vero" (quello sarebbe la diluizione isotopica). Gli scarti osservati sono attesi tra metodi diversi validati su campioni diversi, non necessariamente un errore delle formule pubblicate qui implementate. Il valore di questa validazione è nel **pattern**: direzionalità sistematica e ripetuta (utile per sapere come interpretare un confronto fianco a fianco con un dispositivo Akern) e nell'aver isolato un caso limite concreto (BCM su obesità) che merita cautela extra nell'uso clinico.
+
