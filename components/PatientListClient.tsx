@@ -42,9 +42,12 @@ function avatarColor(name: string): string {
   return AVATAR_PALETTE[Math.abs(hash) % AVATAR_PALETTE.length];
 }
 
-function initials(firstName: string, lastName: string): string {
-  return `${lastName[0] ?? ""}${firstName[0] ?? ""}`.toUpperCase();
-}
+const personSilhouette = (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <circle cx="12" cy="8" r="4" />
+    <path d="M12 14c-5 0-8 2.5-8 6v1h16v-1c0-3.5-3-6-8-6z" />
+  </svg>
+);
 
 function age(birthDate: string): number {
   const diff = Date.now() - new Date(birthDate).getTime();
@@ -135,7 +138,7 @@ export default function PatientListClient({ patients, userName, stats }: { patie
                         flexShrink: 0,
                       }}
                     >
-                      {initials(p.firstName, p.lastName)}
+                      {personSilhouette}
                     </div>
                     <div style={{ minWidth: 0 }}>
                       <div style={{ fontSize: 14, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
