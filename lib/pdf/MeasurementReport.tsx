@@ -7,7 +7,7 @@ import {
   type Vector2D,
   type BodyComposition,
 } from "@/lib/biva-engine";
-import { bmiCategory } from "@/lib/reference-ranges";
+import { bmiCategory, ecwTbwExpected } from "@/lib/reference-ranges";
 
 const PATTERN_LABELS: Record<string, string> = {
   normale: "Normale",
@@ -153,6 +153,11 @@ export default function MeasurementReport({ patient, measurement, population, bo
   const bmi = bodyComposition && measurement.weightKg
     ? measurement.weightKg / ((measurement.heightCm / 100) * (measurement.heightCm / 100))
     : null;
+  const ecwExpected =
+    bodyComposition && bmi !== null && bodyCompositionMethod !== "athlete"
+      ? ecwTbwExpected(age, patient.sex as "M" | "F", bmi)
+      : null;
+  const ecwDeviation = ecwExpected !== null && bodyComposition ? bodyComposition.ecwToTbwPercent - ecwExpected : null;
 
   return (
     <Document>
@@ -243,7 +248,7 @@ export default function MeasurementReport({ patient, measurement, population, bo
               <View style={styles.row}><Text style={styles.rowLabel}>Indice di Massa Corporea (BMI)</Text><Text style={styles.rowValue}>{bmi.toFixed(1)} kg/m2 ({bmiCategory(bmi)})</Text></View>
             )}
             <View style={styles.row}><Text style={styles.rowLabel}>Acqua Totale (TBW)</Text><Text style={styles.rowValue}>{bodyComposition.tbwL.toFixed(1)} l</Text></View>
-            <View style={styles.row}><Text style={styles.rowLabel}>Acqua Extracellulare (ECW)</Text><Text style={styles.rowValue}>{bodyComposition.ecwL.toFixed(1)} l ({bodyComposition.ecwToTbwPercent.toFixed(0)}% del TBW)</Text></View>
+            <View style={styles.row}><Text style={styles.rowLabel}>Acqua Extracellulare (ECW)</Text><Text style={styles.rowValue}>{bodyComposition.ecwL.toFixed(1)} l ({bodyComposition.ecwToTbwPercent.toFixed(1)}% del TBW{ecwDeviation !== null ? `, atteso ${ecwExpected!.toFixed(1)}%, ${ecwDeviation >= 0 ? "+" : ""}${ecwDeviation.toFixed(1)}` : ""})</Text></View>
             <View style={styles.row}><Text style={styles.rowLabel}>Acqua Intracellulare (ICW)</Text><Text style={styles.rowValue}>{bodyComposition.icwL.toFixed(1)} l ({bodyComposition.icwToTbwPercent.toFixed(0)}% del TBW)</Text></View>
             <View style={styles.row}><Text style={styles.rowLabel}>Massa Magra (FFM)</Text><Text style={styles.rowValue}>{bodyComposition.ffmKg.toFixed(1)} kg</Text></View>
             <View style={styles.row}><Text style={styles.rowLabel}>Massa Grassa (FM)</Text><Text style={styles.rowValue}>{bodyComposition.fmKg.toFixed(1)} kg</Text></View>
@@ -256,7 +261,7 @@ export default function MeasurementReport({ patient, measurement, population, bo
           {bodyComposition && bodyCompositionMethod === "athlete" &&
             " Stime quantitative (TBW, ECW, ICW) da equazioni specifiche per atleti (Matias et al., Clin Nutr 2016;35:468-474), validate su 208 atleti di livello nazionale 21±5 anni - intervalli di confidenza individuali ampi, vedi documentazione. FFM da TBW/0.73 (ESPEN/Kyle et al. 2004)."}
           {bodyComposition && bodyCompositionMethod !== "athlete" &&
-            " Stime quantitative da equazioni di regressione pubblicate: TBW da Sun et al. 2003; ECW da Lukaski & Bolonchuk 1988 (Aviat Space Environ Med 59:1163-1169, adulti sani N=110), ICW per differenza; FFM da TBW/0.73 (ESPEN/Kyle et al. 2004) - vedi documentazione per dettagli e limiti."}
+            " Stime quantitative da equazioni di regressione pubblicate: TBW da Sun et al. 2003; ECW da Lukaski & Bolonchuk 1988 (Aviat Space Environ Med 59:1163-1169, adulti sani N=110), ICW per differenza; fascia di riferimento ECW/TBW età/sesso/BMI-specifica da Enderle et al. 2023 (Clin Nutr 42:644-652, n=1958 adulti caucasici); FFM da TBW/0.73 (ESPEN/Kyle et al. 2004) - vedi documentazione per dettagli e limiti."}
           {bmi !== null && " BMI classificato secondo OMS/WHO (Technical Report Series 894, 2000): sottopeso <18.5, normopeso 18.5-24.9, sovrappeso 25-29.9, obesità >=30."}
         </Text>
 

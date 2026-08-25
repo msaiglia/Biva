@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import AppShell from "@/components/AppShell";
 import RangeBar from "@/components/RangeBar";
-import { ffmiRange, fmiRange, tbwPercentRange, bmiRange, bmiCategory } from "@/lib/reference-ranges";
+import { ffmiRange, fmiRange, tbwPercentRange, bmiRange, bmiCategory, ecwTbwExpected, ecwTbwRange } from "@/lib/reference-ranges";
 import {
   normalizeClassic,
   computeSpecificVector,
@@ -428,6 +428,8 @@ function BodyCompositionPanel({
   const fmi = bc.fmKg / (heightM * heightM);
   const tbwPercent = (bc.tbwL / weightKg) * 100;
   const bmi = weightKg / (heightM * heightM);
+  const ecwExpected = method === "standard" ? ecwTbwExpected(ageYears, sex, bmi) : null;
+  const ecwDeviation = ecwExpected !== null ? bc.ecwToTbwPercent - ecwExpected : null;
 
   return (
     <div style={{ background: "#fff", border: "1px solid #e5e2d8", borderRadius: 4, padding: 20 }}>
@@ -462,7 +464,11 @@ function BodyCompositionPanel({
         <BcRow
           label="Acqua Extracellulare (ECW)"
           value={`${bc.ecwL.toFixed(1)} l`}
-          ref={`${bc.ecwToTbwPercent.toFixed(0)}% del TBW`}
+          ref={
+            ecwDeviation !== null
+              ? `${bc.ecwToTbwPercent.toFixed(1)}% del TBW — atteso ${ecwExpected!.toFixed(1)}% (${ecwDeviation >= 0 ? "+" : ""}${ecwDeviation.toFixed(1)})`
+              : `${bc.ecwToTbwPercent.toFixed(0)}% del TBW`
+          }
         />
         <BcRow
           label="Acqua Intracellulare (ICW)"
@@ -482,6 +488,9 @@ function BodyCompositionPanel({
       <RangeBar label="Indice Massa Magra (FFMI)" value={ffmi} unit="kg/m²" zones={ffmiRange(sex)} />
       <RangeBar label="Indice Massa Grassa (FMI)" value={fmi} unit="kg/m²" zones={fmiRange(sex, ageYears)} />
       <RangeBar label="Acqua Totale (% peso corporeo)" value={tbwPercent} unit="%" zones={tbwPercentRange()} />
+      {method === "standard" && (
+        <RangeBar label="Acqua Extracellulare (% TBW)" value={bc.ecwToTbwPercent} unit="%" zones={ecwTbwRange(ageYears, sex, bmi)} />
+      )}
 
       {method === "athlete" ? (
         <div style={{ fontSize: 11, color: "#8a8578", marginTop: 4, marginBottom: 16, padding: "10px 12px", background: "#f7f9fa", borderRadius: 4 }}>
@@ -494,12 +503,13 @@ function BodyCompositionPanel({
       ) : (
         <div style={{ fontSize: 11, color: "#8a8578", marginTop: 4, marginBottom: 16, padding: "10px 12px", background: "#f7f9fa", borderRadius: 4 }}>
           <strong>ECW e ICW individualizzate</strong> (Lukaski &amp; Bolonchuk 1988, non più un rapporto fisso di popolazione).{" "}
-          <strong>Non hanno ancora una fascia colorata</strong>: il rapporto ECW/TBW varia significativamente con età e sesso in
-          letteratura (dal ~40% nei giovani adulti a oltre il 44-47% negli anziani) — non esiste una singola soglia universale, serve
-          un range di riferimento età/sesso-specifico che non abbiamo ancora verificato con lo stesso rigore usato per FFMI/FMI. Per il
-          BCM, la revisione sistematica più recente (Kampo, Závodná &amp; Vondra, <em>Physiol Res</em> 2025, PMID 41511100) conferma una
-          carenza di equazioni e range di riferimento validati in letteratura per questo parametro — non è un limite di questa app, è un
-          gap riconosciuto nel campo.
+          <strong>ECW ha ora una fascia colorata</strong> età/sesso/BMI-specifica (Enderle et al. 2023, <em>Clin Nutr</em> 42:644-652,
+          n=1958 adulti caucasici) — non una soglia unica per tutti, ma un valore atteso calcolato sui tuoi dati anagrafici, con lo
+          scostamento mostrato accanto al valore in litri. Solo per adulti caucasici, non specifico per atleti (per questo qui non
+          appare in modalità Atleta). <strong>ICW e BCM non hanno ancora una fascia colorata</strong>: per l'ICW nessun range
+          età/sesso-specifico verificato con lo stesso rigore; per il BCM, la revisione sistematica più recente (Kampo, Závodná &amp;
+          Vondra, <em>Physiol Res</em> 2025, PMID 41511100) conferma una carenza di equazioni e range di riferimento validati in
+          letteratura per questo parametro — non è un limite di questa app, è un gap riconosciuto nel campo.
         </div>
       )}
 
@@ -513,7 +523,8 @@ function BodyCompositionPanel({
         ) : (
           <> TBW da Sun et al., <em>Am J Clin Nutr</em> 2003
           (DOI: 10.1093/ajcn/77.2.331); ECW da Lukaski &amp; Bolonchuk, <em>Aviat Space Environ Med</em> 1988;59:1163-1169 (adulti sani,
-          N=110), ICW per differenza; FFM derivata da TBW/0.73 (costante di idratazione, ESPEN/Kyle et al., <em>Clin Nutr</em> 2004,
+          N=110), ICW per differenza; fascia di riferimento ECW/TBW da Enderle et al., <em>Clin Nutr</em> 2023;42:644-652
+          (DOI: 10.1016/j.clnu.2023.03.006); FFM derivata da TBW/0.73 (costante di idratazione, ESPEN/Kyle et al., <em>Clin Nutr</em> 2004,
           DOI: 10.1016/j.clnu.2004.06.004); FFMI/FMI da Coin et al., <em>Clin Nutr</em> 2008 (PMID 18206273, popolazione italiana).</>
         )}
         {" "}Software diversi (incluso il tuo dispositivo) possono dare numeri leggermente diversi a parità di R/Xc: è un limite noto

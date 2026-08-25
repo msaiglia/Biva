@@ -18,9 +18,13 @@
  * TBW% — range fisiologico generale (non uno specifico studio
  * percentile), ampiamente consolidato in fisiologia clinica.
  *
- * ECW/ICW, BCM — NESSUNA zona colorata: Moissl et al. 2006 fornisce solo
- * un rapporto medio di popolazione (non una distribuzione con percentili
- * individualizzabili); per il BCM, la revisione sistematica più recente
+ * ECW/TBW% — Enderle et al. 2023 (Clin Nutr 42:644-652), valore atteso e
+ * fascia età/sesso/BMI-specifici (solo modalità Standard, popolazione
+ * caucasica; non applicabile alla modalità Atleta).
+ *
+ * ICW, BCM — ancora NESSUNA zona colorata: per l'ICW il gap è lo stesso
+ * di ECW prima di Enderle 2023 (nessun range età/sesso-specifico ancora
+ * verificato); per il BCM, la revisione sistematica più recente
  * disponibile (Kampo D, Závodná E, Vondra V. "Multi-Frequency
  * Bioimpedance Analysis in Practice: A Review of Validated Prediction
  * Equations for Key Body Composition Parameters." Physiol Res.
@@ -120,4 +124,43 @@ export function bmiCategory(bmi: number): string {
   if (bmi < 25) return "Normopeso";
   if (bmi < 30) return "Sovrappeso";
   return "Obesità";
+}
+
+/**
+ * Valore ATTESO di ECW/TBW% per un adulto sano, individualizzato per età,
+ * sesso e BMI — NON un valore fisso di popolazione.
+ *
+ * Fonte: Enderle J, Reljic D, Jensen B, Peine S, Zopf Y, Bosy-Westphal A.
+ * "Normal values for body composition in adults are better represented by
+ * continuous reference ranges dependent on age and BMI." Clin Nutr.
+ * 2023;42(5):644-652. DOI: 10.1016/j.clnu.2023.03.006. Tabella 2 (modello
+ * BMI-dipendente), n=1958 adulti caucasici sani, età 18-97 anni, validato
+ * contro diluizione D2O/NaBr. Limite dichiarato: solo popolazione
+ * caucasica; nessun dato specifico per atleti.
+ */
+export function ecwTbwExpected(ageYears: number, sex: Sex, bmi: number): number {
+  return sex === "M"
+    ? -0.0979 * ageYears + 0.00198 * ageYears * ageYears + 0.1131 * bmi + 38.68
+    : -0.096 * ageYears + 0.002088 * ageYears * ageYears + 0.1119 * bmi + 42.0;
+}
+
+/**
+ * Fascia di riferimento per ECW/TBW% attorno al valore atteso (età, sesso,
+ * BMI), usando l'errore standard di stima (SEE) del modello di Enderle et
+ * al. 2023 come unità di scostamento: normale entro ±1 SEE, borderline
+ * entro ±2 SEE (convenzione statistica standard, analoga a come le altre
+ * fasce di quest'app usano percentili o deviazioni standard pubblicate).
+ */
+export function ecwTbwRange(ageYears: number, sex: Sex, bmi: number): RangeZones {
+  const expected = ecwTbwExpected(ageYears, sex, bmi);
+  const see = sex === "M" ? 1.06 : 1.46;
+  return {
+    min: expected - 3 * see,
+    lowBoundary: expected - 2 * see,
+    normalLow: expected - see,
+    normalHigh: expected + see,
+    highBoundary: expected + 2 * see,
+    max: expected + 3 * see,
+    sourceLabel: `Enderle et al. 2023 (Clin Nutr 42:644-652) — valore atteso età/sesso/BMI-specifico ±1-2 SEE (n=1958, adulti caucasici, non specifico per atleti)`,
+  };
 }
