@@ -256,7 +256,7 @@ export default function MeasurementReport({ patient, measurement, population, bo
           {bodyComposition && bodyCompositionMethod === "athlete" &&
             " Stime quantitative (TBW, ECW, ICW) da equazioni specifiche per atleti (Matias et al., Clin Nutr 2016;35:468-474), validate su 208 atleti di livello nazionale 21±5 anni - intervalli di confidenza individuali ampi, vedi documentazione. FFM da TBW/0.73 (ESPEN/Kyle et al. 2004)."}
           {bodyComposition && bodyCompositionMethod !== "athlete" &&
-            " Stime quantitative da equazioni di regressione pubblicate (Sun et al. 2003; ESPEN/Kyle et al. 2004; Dittmar & Reber 2001) - vedi documentazione per dettagli e limiti."}
+            " Stime quantitative da equazioni di regressione pubblicate: TBW da Sun et al. 2003; ECW da Lukaski & Bolonchuk 1988 (Aviat Space Environ Med 59:1163-1169, adulti sani N=110), ICW per differenza; FFM da TBW/0.73 (ESPEN/Kyle et al. 2004) - vedi documentazione per dettagli e limiti."}
           {bmi !== null && " BMI classificato secondo OMS/WHO (Technical Report Series 894, 2000): sottopeso <18.5, normopeso 18.5-24.9, sovrappeso 25-29.9, obesità >=30."}
         </Text>
 

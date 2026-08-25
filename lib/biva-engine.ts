@@ -269,9 +269,16 @@ export function computeBodyComposition(
   const ffmKg = tbwL / HYDRATION_CONSTANT;
   const fmKg = weightKg - ffmKg;
 
-  const ECW_TBW_RATIO = 0.4; // Moissl et al. 2006 — rapporto medio di popolazione
-  const ecwL = tbwL * ECW_TBW_RATIO;
-  const icwL = tbwL * (1 - ECW_TBW_RATIO);
+  // ECW individualizzata — Lukaski HC, Bolonchuk WW. "Estimation of body
+  // fluid volumes using tetrapolar bioelectrical impedance measurements."
+  // Aviat Space Environ Med. 1988;59(12):1163-1169. Adulti sani (N=110,
+  // 20-73 anni), stessa singola frequenza (50kHz) che raccogliamo.
+  // Coefficienti verificati su due fonti secondarie indipendenti che
+  // concordano esattamente: Matias et al. 2016 (Clin Nutr 35:468-474,
+  // Tabella 1) e Siconolfi et al. 1997 (J Appl Physiol 82:704-710, testo).
+  // ICW per differenza (TBW - ECW), non un rapporto fisso di popolazione.
+  const ecwL = 0.189 * ht2R + 0.052 * weightKg - 0.0002 * ((heightCm * heightCm) / Xc) + 1.03;
+  const icwL = tbwL - ecwL;
 
   // BCM (massa cellulare corporea) — Dittmar M, Reber H. "New equations
   // for estimating body cell mass from bioimpedance parallel models in
@@ -291,8 +298,8 @@ export function computeBodyComposition(
     fmKg,
     ecwL,
     icwL,
-    ecwToTbwPercent: ECW_TBW_RATIO * 100,
-    icwToTbwPercent: (1 - ECW_TBW_RATIO) * 100,
+    ecwToTbwPercent: (ecwL / tbwL) * 100,
+    icwToTbwPercent: (icwL / tbwL) * 100,
     bcmKg,
   };
 }

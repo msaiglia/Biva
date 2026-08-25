@@ -263,7 +263,7 @@ export default function MeasurementForm({
                 <div style={{ fontSize: 11, color: "#8a8578", marginTop: 6 }}>
                   {bodyCompositionMethod === "athlete"
                     ? "Matias et al. 2016 — validata su atleti di livello nazionale (21±5 anni), ECW/ICW individualizzati."
-                    : "Sun et al. 2003 — popolazione generale. ECW/ICW da rapporto fisso di popolazione (non individualizzato)."}
+                    : "Sun et al. 2003 — TBW popolazione generale. ECW individualizzata (Lukaski & Bolonchuk 1988), ICW per differenza."}
                 </div>
               </FieldRow>
             )}
@@ -493,10 +493,13 @@ function BodyCompositionPanel({
         </div>
       ) : (
         <div style={{ fontSize: 11, color: "#8a8578", marginTop: 4, marginBottom: 16, padding: "10px 12px", background: "#f7f9fa", borderRadius: 4 }}>
-          <strong>ECW, ICW e BCM non hanno zone colorate.</strong> Per ECW/ICW disponiamo solo di un rapporto medio di popolazione
-          (Moissl et al. 2006), non di una distribuzione con percentili individualizzabili. Per il BCM, la revisione sistematica più
-          recente (Kampo, Závodná &amp; Vondra, <em>Physiol Res</em> 2025, PMID 41511100) conferma una carenza di equazioni e range di
-          riferimento validati in letteratura per questo parametro — non è un limite di questa app, è un gap riconosciuto nel campo.
+          <strong>ECW e ICW individualizzate</strong> (Lukaski &amp; Bolonchuk 1988, non più un rapporto fisso di popolazione).{" "}
+          <strong>Non hanno ancora una fascia colorata</strong>: il rapporto ECW/TBW varia significativamente con età e sesso in
+          letteratura (dal ~40% nei giovani adulti a oltre il 44-47% negli anziani) — non esiste una singola soglia universale, serve
+          un range di riferimento età/sesso-specifico che non abbiamo ancora verificato con lo stesso rigore usato per FFMI/FMI. Per il
+          BCM, la revisione sistematica più recente (Kampo, Závodná &amp; Vondra, <em>Physiol Res</em> 2025, PMID 41511100) conferma una
+          carenza di equazioni e range di riferimento validati in letteratura per questo parametro — non è un limite di questa app, è un
+          gap riconosciuto nel campo.
         </div>
       )}
 
@@ -509,7 +512,8 @@ function BodyCompositionPanel({
           FFMI/FMI da Coin et al., <em>Clin Nutr</em> 2008 (PMID 18206273, popolazione italiana — non specifica per atleti).</>
         ) : (
           <> TBW da Sun et al., <em>Am J Clin Nutr</em> 2003
-          (DOI: 10.1093/ajcn/77.2.331); FFM derivata da TBW/0.73 (costante di idratazione, ESPEN/Kyle et al., <em>Clin Nutr</em> 2004,
+          (DOI: 10.1093/ajcn/77.2.331); ECW da Lukaski &amp; Bolonchuk, <em>Aviat Space Environ Med</em> 1988;59:1163-1169 (adulti sani,
+          N=110), ICW per differenza; FFM derivata da TBW/0.73 (costante di idratazione, ESPEN/Kyle et al., <em>Clin Nutr</em> 2004,
           DOI: 10.1016/j.clnu.2004.06.004); FFMI/FMI da Coin et al., <em>Clin Nutr</em> 2008 (PMID 18206273, popolazione italiana).</>
         )}
         {" "}Software diversi (incluso il tuo dispositivo) possono dare numeri leggermente diversi a parità di R/Xc: è un limite noto
