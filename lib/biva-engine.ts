@@ -216,15 +216,13 @@ export function hasSpecificData(m: RawMeasurement): boolean {
 // più vicini (1.7 kg e 0.6 kg di scarto, contro 4.5 kg dell'equazione
 // diretta).
 //
-// ECW/ICW: la scomposizione individualizzata da un dispositivo a singola
-// frequenza (50 kHz, come il tuo) ha un errore noto e documentato in
-// letteratura (ESPEN: "SF-BIA... cannot determine differences in ICW").
-// Non essendoci un'equazione R50/Xc50 verificabile con sufficiente
-// affidabilità in questa sessione, uso un rapporto di popolazione medio
-// (ECW ≈40%, ICW ≈60% del TBW), esplicitamente segnalato come
-// approssimazione — non una stima individualizzata:
-//   Moissl U, et al. Physiol Meas. 2006 (rapporto ECW/ICW fisiologico).
-// Una BIS multi-frequenza darebbe una scomposizione più accurata.
+// ECW/ICW: individualizzate (non un rapporto fisso di popolazione) tramite
+// Lukaski & Bolonchuk 1988 (metodo Standard) o Matias et al. 2016 (metodo
+// Atleta) — vedi i commenti sopra le rispettive funzioni per le citazioni
+// complete. Restano comunque stime da equazioni a singola frequenza (50kHz):
+// una BIS multi-frequenza darebbe una scomposizione più accurata (ESPEN:
+// "SF-BIA... cannot determine differences in ICW" con la stessa precisione
+// di un dispositivo multi-frequenza).
 // ---------------------------------------------------------------------
 
 export interface BodyComposition {
