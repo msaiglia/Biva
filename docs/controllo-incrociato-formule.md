@@ -42,18 +42,21 @@ Traduzione letterale delle Eq. 1a/2a: `K = F(n+1)/[n(n-2)]` (tolleranza) o `K = 
 |---|---|---|
 | **TBW** (uomini) | `1.203 + 0.449×(H²/R) + 0.176×peso` | Sun SS, et al. *Am J Clin Nutr.* 2003;77:331-340. DOI: 10.1093/ajcn/77.2.331 |
 | **TBW** (donne) | `3.747 + 0.450×(H²/R) + 0.113×peso` | Idem |
-| **FFM** | `TBW / 0.73` | Costante di idratazione ESPEN — Kyle UG, et al. *Clin Nutr.* 2004;23:1226-1243. DOI: 10.1016/j.clnu.2004.06.004 |
+| **FFM** (BMI<25) | `TBW / 0.73` | Costante di idratazione ESPEN — Kyle UG, et al. *Clin Nutr.* 2004;23:1226-1243. DOI: 10.1016/j.clnu.2004.06.004 |
+| **FFM** (BMI 25-29.9) | `-8.395 + 0.340×(H²/R) - 5.760×sesso(F=1) + 0.222×peso - 0.041×età + 0.138×altezza(cm) + 0.700×angolo di fase` | Costa RF, Masset KVSB, Silva AM, et al. *Front Nutr.* 2025;12:1499752. DOI: 10.3389/fnut.2025.1499752 — validata su DXA, N=269, popolazione brasiliana (18-79 anni). Sesso invertito rispetto alle altre equazioni di questo file: donna=1, uomo=0 |
+| **FFM** (BMI≥30) | `-0.058 + 0.463×(H²/R) + 0.278×peso - 5.150×sesso(F=1) + 0.115×Xc - 0.049×età` | Idem, equazione specifica obesità |
 | **FM** | `peso − FFM` | Identità |
 | **ECW** | `0.189×(H²/R) + 0.052×peso − 0.0002×(H²/Xc) + 1.03` | Lukaski HC, Bolonchuk WW. *Aviat Space Environ Med.* 1988;59:1163-1169. Adulti sani N=110. Coefficienti verificati su **due fonti secondarie indipendenti concordanti**: Matias et al. 2016 (Tab. 1) e Siconolfi et al. 1997 (*J Appl Physiol* 82:704-710, testo) |
 | **ICW** | `TBW − ECW` | Identità (TBW = ECW + ICW) |
 | **BCM** | `1.898×(H²/Xcp) − 0.051×peso + 4.18×sesso + 15.496` (Xcp = reattanza parallela) | Dittmar M, Reber H. *Am J Physiol Endocrinol Metab.* 2001;281:E1005-14 (citata in ESPEN/Kyle 2004, Tab. 6) |
 | **Xcp** (serie→parallelo) | `(R² + Xc²) / Xc` | Identità circuitale standard (ammettenza), non specifica di uno studio |
 
-`H` = altezza in cm, `R`/`Xc` in Ω, peso in kg, sesso: uomo=1/donna=0.
+`H` = altezza in cm, `R`/`Xc` in Ω, peso in kg, sesso: uomo=1/donna=0 salvo dove indicato diversamente (equazioni Costa 2025, invertite).
 
 **Limiti dichiarati nel codice**:
-- BCM: sviluppata su popolazione anziana tedesca (60-90 anni) — testata contro 2 referti Akern reali in una sessione precedente, risultati **disomogenei** (0.3 kg e 4.5 kg di scarto). Applicare con cautela fuori da quella fascia d'età.
-- FFM da TBW/0.73 preferita a un'equazione di regressione diretta (es. Kyle 2001) perché nel test contro referti reali ha dato risultati più vicini (1.7 kg e 0.6 kg di scarto, contro 4.5 kg dell'equazione diretta).
+- BCM: sviluppata su popolazione anziana tedesca (60-90 anni) — testata contro referti Akern reali, risultati **disomogenei** (0.3-4.5kg su anziani, **-13.4kg su un caso di obesità BMI 34.6**). Nessuna equazione BCM specifica per obesità trovata in letteratura (gap confermato da Kampo, Závodná & Vondra 2025 e da una revisione di Campa et al. 2024) — resta un limite noto e non risolto.
+- FFM per obesità (Costa 2025): popolazione di sviluppo brasiliana, non italiana. Nel test contro il caso reale di obesità già trovato (BMI 34.6), questa nuova equazione si è scostata **di più** dal valore Akern rispetto al vecchio TBW/0.73 (-5.9kg vs -1.0kg) — ma questo confronto è contro un algoritmo proprietario non verificato, non contro un gold standard reale (DXA). Kyle 2001, testato dagli stessi autori di Costa 2025 su soggetti sovrappeso/obesi contro DXA vero, ha fallito la validazione (sovrastima significativa, p<0.001) — a conferma che le equazioni generaliste non vanno bene su questa popolazione, indipendentemente da cosa dica il confronto con Akern in un singolo caso.
+- FFM da TBW/0.73 (sotto BMI 25) preferita a un'equazione di regressione diretta (es. Kyle 2001) perché nel test contro referti reali ha dato risultati più vicini (1.7 kg e 0.6 kg di scarto, contro 4.5 kg dell'equazione diretta).
 
 ---
 

@@ -412,8 +412,8 @@ function BodyCompositionPanel({
     () =>
       method === "athlete"
         ? computeBodyCompositionAthlete(R, Xc, heightCm, weightKg, sex)
-        : computeBodyComposition(R, Xc, heightCm, weightKg, sex),
-    [R, Xc, heightCm, weightKg, sex, method]
+        : computeBodyComposition(R, Xc, heightCm, weightKg, sex, ageYears),
+    [R, Xc, heightCm, weightKg, sex, method, ageYears]
   );
   const heightM = heightCm / 100;
 
@@ -481,7 +481,11 @@ function BodyCompositionPanel({
               : `${bc.icwToTbwPercent.toFixed(0)}% del TBW`
           }
         />
-        <BcRow label="Massa Magra (FFM)" value={`${bc.ffmKg.toFixed(1)} kg`} ref={formatRef(bc.ffmKg, "kg")} />
+        <BcRow
+          label="Massa Magra (FFM)"
+          value={`${bc.ffmKg.toFixed(1)} kg`}
+          ref={method === "athlete" || bmi < 25 ? formatRef(bc.ffmKg, "kg") : bmi >= 30 ? "equazione specifica obesità (Costa 2025)" : "equazione specifica sovrappeso (Costa 2025)"}
+        />
         <BcRow label="Massa Grassa (FM)" value={`${bc.fmKg.toFixed(1)} kg`} ref={formatRef(bc.fmKg, "kg")} />
         <BcRow label="Massa Cellulare (BCM)" value={`${bc.bcmKg.toFixed(1)} kg`} ref={formatRef(bc.bcmKg, "kg")} />
       </div>
@@ -533,8 +537,11 @@ function BodyCompositionPanel({
           <> TBW da Sun et al., <em>Am J Clin Nutr</em> 2003
           (DOI: 10.1093/ajcn/77.2.331); ECW da Lukaski &amp; Bolonchuk, <em>Aviat Space Environ Med</em> 1988;59:1163-1169 (adulti sani,
           N=110), ICW per differenza; fascia di riferimento ECW/TBW da Enderle et al., <em>Clin Nutr</em> 2023;42:644-652
-          (DOI: 10.1016/j.clnu.2023.03.006); FFM derivata da TBW/0.73 (costante di idratazione, ESPEN/Kyle et al., <em>Clin Nutr</em> 2004,
-          DOI: 10.1016/j.clnu.2004.06.004); FFMI/FMI da Coin et al., <em>Clin Nutr</em> 2008 (PMID 18206273, popolazione italiana).</>
+          (DOI: 10.1016/j.clnu.2023.03.006); FFM derivata da TBW/0.73 sotto BMI 25 (costante di idratazione, ESPEN/Kyle et al.,
+          <em>Clin Nutr</em> 2004, DOI: 10.1016/j.clnu.2004.06.004), da equazione specifica per sovrappeso/obesità sopra BMI 25
+          (Costa et al., <em>Front Nutr</em> 2025;12:1499752, DOI: 10.3389/fnut.2025.1499752, validata contro DXA su popolazione
+          brasiliana N=269 — non italiana, ma preferibile a un'equazione generalista fuori target); FFMI/FMI da Coin et al.,
+          <em>Clin Nutr</em> 2008 (PMID 18206273, popolazione italiana).</>
         )}
         {" "}Software diversi (incluso il tuo dispositivo) possono dare numeri leggermente diversi a parità di R/Xc: è un limite noto
         della letteratura, non un errore.

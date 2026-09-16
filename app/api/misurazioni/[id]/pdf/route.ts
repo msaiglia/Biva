@@ -35,6 +35,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     pubmedVerified: pop.pubmedVerified,
   };
 
+  const ageAtMeasurement = Math.floor(
+    (measurement.measuredAt.getTime() - measurement.patient.birthDate.getTime()) / (365.25 * 24 * 3600 * 1000)
+  );
+
   const bodyComposition = measurement.weightKg
     ? measurement.bodyCompositionMethod === "athlete"
       ? computeBodyCompositionAthlete(
@@ -49,7 +53,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
           measurement.reactanceOhm,
           measurement.heightCm,
           measurement.weightKg,
-          measurement.patient.sex as "M" | "F"
+          measurement.patient.sex as "M" | "F",
+          ageAtMeasurement
         )
     : null;
 

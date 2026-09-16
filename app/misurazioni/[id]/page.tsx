@@ -50,7 +50,8 @@ export default async function MeasurementViewPage({ params }: { params: Promise<
           measurement.reactanceOhm,
           measurement.heightCm,
           measurement.weightKg,
-          measurement.patient.sex as "M" | "F"
+          measurement.patient.sex as "M" | "F",
+          age
         )
     : null;
   const bmi = measurement.weightKg
