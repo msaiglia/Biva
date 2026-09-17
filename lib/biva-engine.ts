@@ -264,7 +264,24 @@ export function computeBodyComposition(
       ? 1.203 + 0.449 * ht2R + 0.176 * weightKg
       : 3.747 + 0.45 * ht2R + 0.113 * weightKg;
 
-  // FFM — TBW/0.73 (costante di idratazione ESPEN) per tutte le fasce di BMI.
+  // FFM — equazione DIRETTA di Sun et al. 2003 (stessa fonte primaria e
+  // stessa popolazione del TBW sopra — Am J Clin Nutr 2003;77:331-340,
+  // DOI 10.1093/ajcn/77.2.331, Tabella 5), non più derivata da TBW/0.73.
+  // Verificata sul PDF originale in questa sessione (mai letto prima):
+  //   Uomini (N=669): FFM = -10.68 + 0.65×(H²/R) + 0.26×peso + 0.02×R
+  //                   R²=0.90, RMSE=3.9kg
+  //   Donne  (N=944): FFM = -9.53 + 0.69×(H²/R) + 0.17×peso + 0.02×R
+  //                   R²=0.83, RMSE=2.9kg
+  // Preferita a TBW/0.73 perché: stessa fonte del TBW (coerenza interna,
+  // non serve più assumere una costante esterna), regressione diretta
+  // contro un modello multicomponente vero (non un rapporto fisico
+  // assunto), campione ampio (N=1613) con cross-validazione PRESS.
+  // La costante di idratazione 0.73 resta comunque scientificamente
+  // solida (Wang Z, et al. "Hydration of fat-free body mass: review and
+  // critique of a classic body-composition constant." Am J Clin Nutr.
+  // 1999;69:833-841 — media cadaveri umani 0.737±0.036, stabile tra
+  // specie) ma porta una variabilità individuale intrinseca (±0.02-0.03)
+  // che l'equazione diretta, sulla stessa fonte del TBW, evita.
   //
   // NOTA STORICA: in una versione precedente, per BMI≥25 veniva usata
   // un'equazione specifica per sovrappeso/obesità — Costa RF, Masset KVSB,
@@ -279,14 +296,13 @@ export function computeBodyComposition(
   // della formula semplice). Ipotesi più probabile: mismatch etnico (il
   // campione di sviluppo Costa 2025 è brasiliano, con forte meticciato
   // dichiarato dagli stessi autori) più che un difetto dell'equazione in
-  // sé — ma su questa popolazione (pazienti sardi) e questo dispositivo
-  // (Akern), la formula generalista si comporta meglio in pratica.
-  // Akern non è un gold standard (è un algoritmo proprietario non
-  // pubblicato), quindi questo non dimostra che Costa 2025 sia "sbagliata"
-  // in assoluto — ma il pattern era troppo consistente (6/6 stessa
-  // direzione) per continuare a usarla qui.
-  const HYDRATION_CONSTANT = 0.73; // ESPEN: idratazione media della FFM negli adulti sani
-  const ffmKg = tbwL / HYDRATION_CONSTANT;
+  // sé. Da quando Mauro usa solo BIVA Pro (non più il modulo Akern), il
+  // confronto con Akern non è più l'obiettivo di validazione — resta qui
+  // solo come nota storica sul perché quella equazione non è più in uso.
+  const ffmKg =
+    sex === "M"
+      ? -10.68 + 0.65 * ht2R + 0.26 * weightKg + 0.02 * R
+      : -9.53 + 0.69 * ht2R + 0.17 * weightKg + 0.02 * R;
   const fmKg = weightKg - ffmKg;
 
   // ECW individualizzata — Lukaski HC, Bolonchuk WW. "Estimation of body
@@ -306,9 +322,17 @@ export function computeBodyComposition(
   // (citata in ESPEN/Kyle et al. 2004, Tabella 6). Sviluppata in una
   // popolazione anziana (60-90 anni): verificata in questa sessione contro
   // referti Akern reali con risultati DISOMOGENEI, incluso un caso di
-  // obesità (BMI 34.6) con scarto di -13.4 kg — nessun'equazione BCM
-  // specifica per obesità trovata in letteratura (gap riconosciuto anche
-  // da Kampo, Závodná & Vondra 2025 e da Campa et al. 2024).
+  // obesità (BMI 34.6) con scarto di -13.4 kg.
+  // Coefficienti riconfermati indipendentemente (stessi numeri esatti:
+  // 1.898, 0.051, 4.180, 15.496) da una revisione sistematica letta
+  // direttamente in questa sessione — Campa F, Coratella G, Cerullo G,
+  // et al. "High-standard predictive equations for estimating body
+  // composition using bioelectrical impedance analysis: a systematic
+  // review." J Transl Med. 2024;22:515. DOI: 10.1186/s12967-024-05272-x
+  // (PDF fornito dall'utente, Tabella 4) — che conferma anche essere
+  // l'UNICA equazione BCM pubblicata rintracciata su 64 studi (1988-2023):
+  // non una scelta tra alternative disponibili, l'unica esistente in
+  // letteratura. Nessuna equazione BCM specifica per obesità esiste.
   const xcp = seriesToParallelReactance(R, Xc);
   const sexTerm = sex === "M" ? 1 : 0;
   const bcmKg = 1.898 * (heightCm * heightCm / xcp) - 0.051 * weightKg + 4.18 * sexTerm + 15.496;

@@ -40,20 +40,21 @@ Traduzione letterale delle Eq. 1a/2a: `K = F(n+1)/[n(n-2)]` (tolleranza) o `K = 
 
 | Parametro | Formula | Fonte |
 |---|---|---|
-| **TBW** (uomini) | `1.203 + 0.449×(H²/R) + 0.176×peso` | Sun SS, et al. *Am J Clin Nutr.* 2003;77:331-340. DOI: 10.1093/ajcn/77.2.331 |
-| **TBW** (donne) | `3.747 + 0.450×(H²/R) + 0.113×peso` | Idem |
-| **FFM** | `TBW / 0.73` | Costante di idratazione ESPEN — Kyle UG, et al. *Clin Nutr.* 2004;23:1226-1243. DOI: 10.1016/j.clnu.2004.06.004 |
+| **TBW** (uomini) | `1.203 + 0.449×(H²/R) + 0.176×peso` | Sun SS, et al. *Am J Clin Nutr.* 2003;77:331-340. DOI: 10.1093/ajcn/77.2.331. **Verificato sul PDF originale** in questa sessione — Tabella 5, coefficienti pubblicati 1.20/0.45/0.18 (arrotondati a 2 decimali), N=712 |
+| **TBW** (donne) | `3.747 + 0.450×(H²/R) + 0.113×peso` | Idem, Tabella 5, N=1089 |
+| **FFM** (uomini) | `-10.68 + 0.65×(H²/R) + 0.26×peso + 0.02×R` | Sun SS, et al. 2003, Tabella 5 — **equazione diretta, stessa fonte e popolazione del TBW** (non più derivata da una costante di idratazione). N=669, R²=0.90, RMSE=3.9kg |
+| **FFM** (donne) | `-9.53 + 0.69×(H²/R) + 0.17×peso + 0.02×R` | Idem, N=944, R²=0.83, RMSE=2.9kg |
 | **FM** | `peso − FFM` | Identità |
 | **ECW** | `0.189×(H²/R) + 0.052×peso − 0.0002×(H²/Xc) + 1.03` | Lukaski HC, Bolonchuk WW. *Aviat Space Environ Med.* 1988;59:1163-1169. Adulti sani N=110. Coefficienti verificati su **due fonti secondarie indipendenti concordanti**: Matias et al. 2016 (Tab. 1) e Siconolfi et al. 1997 (*J Appl Physiol* 82:704-710, testo) |
 | **ICW** | `TBW − ECW` | Identità (TBW = ECW + ICW) |
-| **BCM** | `1.898×(H²/Xcp) − 0.051×peso + 4.18×sesso + 15.496` (Xcp = reattanza parallela) | Dittmar M, Reber H. *Am J Physiol Endocrinol Metab.* 2001;281:E1005-14 (citata in ESPEN/Kyle 2004, Tab. 6) |
+| **BCM** | `1.898×(H²/Xcp) − 0.051×peso + 4.18×sesso + 15.496` (Xcp = reattanza parallela) | Dittmar M, Reber H. *Am J Physiol Endocrinol Metab.* 2001;281:E1005-14 (citata in ESPEN/Kyle 2004, Tab. 6). **Coefficienti riconfermati indipendentemente** (stessi numeri esatti) da Campa F, et al. *J Transl Med.* 2024;22:515. DOI: 10.1186/s12967-024-05272-x — revisione sistematica **letta direttamente** (PDF fornito dall'utente, Tabella 4), che conferma essere l'**unica equazione BCM pubblicata** su 64 studi rintracciati (1988-2023) |
 | **Xcp** (serie→parallelo) | `(R² + Xc²) / Xc` | Identità circuitale standard (ammettenza), non specifica di uno studio |
 
 `H` = altezza in cm, `R`/`Xc` in Ω, peso in kg, sesso: uomo=1/donna=0.
 
 **Limiti dichiarati nel codice**:
-- BCM: sviluppata su popolazione anziana tedesca (60-90 anni) — testata contro referti Akern reali, risultati **disomogenei** (0.3-4.5kg su anziani, da -6.1 a -13.4kg su 4 casi di obesità BMI 33.9-37.5). Nessuna equazione BCM specifica per obesità trovata in letteratura (gap confermato da Kampo, Závodná & Vondra 2025 e da una revisione di Campa et al. 2024) — resta un limite noto e non risolto.
-- FFM da TBW/0.73 preferita a un'equazione di regressione diretta (es. Kyle 2001) perché nel test contro referti reali ha dato risultati più vicini.
+- BCM: sviluppata su popolazione anziana tedesca (60-90 anni) — testata contro referti Akern reali, risultati **disomogenei** (0.3-4.5kg su anziani, da -6.1 a -13.4kg su 4 casi di obesità BMI 33.9-37.5). Nessuna equazione BCM specifica per obesità esiste in letteratura — confermato dalla revisione sistematica di Campa et al. 2024 (unica equazione BCM pubblicata in 35 anni) — resta un limite noto, strutturale e non risolvibile con i dati attualmente raccolti (servirebbe una fonte che semplicemente non esiste ancora).
+- FFM (superato, vedi sopra): fino a una sessione precedente si usava TBW/0.73 (costante di idratazione ESPEN — comunque solida: Wang Z, et al. *Am J Clin Nutr.* 1999;69:833-841, media 0.737±0.036 su cadaveri umani, stabile tra specie, ma con variabilità individuale intrinseca ±0.02-0.03). Sostituita con l'equazione diretta di Sun 2003 perché stessa fonte/popolazione del TBW, senza assumere una costante esterna.
 
 **Episodio chiuso — FFM specifica per sovrappeso/obesità (Costa/Masset et al. 2025, *Front Nutr* 12:1499752, validata su DXA N=269
 brasiliani) provata e ritirata**: per un periodo, FFM per BMI≥25 usava questa equazione al posto di TBW/0.73. Validazione empirica
@@ -131,23 +132,26 @@ Un blocco di commento in `lib/biva-engine.ts` (righe 219-227 prima della correzi
 | Piccoli et al. 1994 | Kidney Int. | — | Fonte primaria, formula vettore |
 | Piccoli & Pastori 2002 | BIVA Software, Univ. Padova | — | Fonte primaria, ellissi |
 | Buffa & Marini 2013 | PLoS ONE | 10.1371/journal.pone.0058533 | Open access, fonte primaria |
-| Sun et al. 2003 | Am J Clin Nutr | 10.1093/ajcn/77.2.331 | Fonte primaria |
-| Kyle et al. 2004 (ESPEN) | Clin Nutr | 10.1016/j.clnu.2004.06.004 | Fonte primaria |
+| Sun et al. 2003 | Am J Clin Nutr | 10.1093/ajcn/77.2.331 | **PDF fornito dall'utente**, letto per intero — TBW confermato esatto (Tabella 5); scoperta un'equazione FFM diretta nella stessa tabella, ora in uso al posto di TBW/0.73 |
+| Kyle et al. 2004 (ESPEN) | Clin Nutr | 10.1016/j.clnu.2004.06.004 | Fonte primaria (citazione della costante 0.73, non più in uso per il metodo Standard — vedi Wang et al. 1999 sotto) |
 | Lukaski & Bolonchuk 1988 | Aviat Space Environ Med | — (paywall) | **2 fonti secondarie indipendenti concordanti** (Matias 2016 Tab.1, Siconolfi 1997 testo) — PDF di Siconolfi fornito dall'utente |
-| Dittmar & Reber 2001 | Am J Physiol Endocrinol Metab | — | Citata in ESPEN 2004; testata contro 2 referti Akern reali (risultati disomogenei, limite dichiarato) |
+| Dittmar & Reber 2001 | Am J Physiol Endocrinol Metab | — | Citata in ESPEN 2004; testata contro referti Akern reali (risultati disomogenei, limite dichiarato); **coefficienti riconfermati indipendentemente** da Campa et al. 2024 (stessi numeri esatti) |
 | Matias et al. 2016 | Clin Nutr | 10.1016/j.clnu.2015.03.013 | **PDF fornito dall'utente**, verificato numericamente contro 2 worked examples |
 | Coin et al. 2008 | Clin Nutr | DOI 10.1016/j.clnu.2007.10.008, PMID 18206273 | **PDF fornito dall'utente**, verificato riga per riga su Tabelle 2 e 4 — FFMI confermata esatta, **FMI corretta**: la vecchia approssimazione a 2 fasce (<50/≥50) non rifletteva le 6 fasce decennali reali, specie per la fascia 40-59 e per i valori femminili (non corrispondevano affatto alla tabella originale) |
 | WHO TRS 894, 2000 | — | — | Classificazione standard internazionale, nota |
 | Enderle et al. 2023 | Clin Nutr | 10.1016/j.clnu.2023.03.006 | **PDF fornito dall'utente**, verificato numericamente contro Fig.1 e identità matematica |
-| Kampo, Závodná & Vondra 2025 | Physiol Res | PMID 41511100 | Citata per confermare un gap (assenza di range BCM), non per fornire una formula |
+| Wang Z, et al. 1999 | Am J Clin Nutr | — | **PDF fornito dall'utente**, letto per intero — revisione della costante di idratazione 0.73 (0.737±0.036 su cadaveri umani); non più usata per il calcolo FFM in modalità Standard (sostituita da Sun 2003 diretta), citata solo come contesto storico |
+| Campa et al. 2024 | J Transl Med | 10.1186/s12967-024-05272-x | **PDF fornito dall'utente**, letto per intero — revisione sistematica che conferma Dittmar & Reber 2001 come unica equazione BCM pubblicata (64 studi, 1988-2023) |
+| Kampo, Závodná & Vondra 2025 | Physiol Res | PMID 41511100 | **Mai verificata direttamente da me in questa conversazione** — ereditata da una sintesi di sessioni precedenti. Sostituita in via primaria da Campa et al. 2024 (sopra), che ho letto di persona per la stessa affermazione (gap equazioni BCM) |
 
 ---
 
 ## 8. Cosa NON è ancora implementato (onestamente dichiarato)
 
-1. Fascia colorata per **ICW assoluto** e **BCM** — nessuna fonte verificata trovata
+1. Fascia colorata per **ICW assoluto** e **BCM** — nessuna fonte verificata trovata (confermato gap strutturale da Campa et al. 2024)
 2. Fascia colorata **ECW/ICW per la modalità Atleta** — la fonte disponibile (Enderle 2023) non è validata su sportivi
 3. **BIVA specifica**: nessuna popolazione di riferimento con parametri (media/SD/r) ancora caricata nel database — il motore di calcolo la supporta, ma senza popolazioni di riferimento verificate non è utilizzabile in pratica
+4. **Letti ma non applicati**: Pozo et al. 2026 (*Nutrition*, angolo di fase in obesità sarcopenica — letteratura ancora troppo eterogenea per una soglia clinica precisa, nessun meta-analisi possibile secondo gli stessi autori); Rosa et al. 2025 (*Rev Endocr Metab Disord*, angolo di fase in età pediatrica — non applicabile, questa app resta per adulti)
 
 ---
 

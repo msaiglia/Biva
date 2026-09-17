@@ -537,8 +537,8 @@ function BodyCompositionPanel({
           <> TBW da Sun et al., <em>Am J Clin Nutr</em> 2003
           (DOI: 10.1093/ajcn/77.2.331); ECW da Lukaski &amp; Bolonchuk, <em>Aviat Space Environ Med</em> 1988;59:1163-1169 (adulti sani,
           N=110), ICW per differenza; fascia di riferimento ECW/TBW da Enderle et al., <em>Clin Nutr</em> 2023;42:644-652
-          (DOI: 10.1016/j.clnu.2023.03.006); FFM derivata da TBW/0.73 (costante di idratazione, ESPEN/Kyle et al.,
-          <em>Clin Nutr</em> 2004, DOI: 10.1016/j.clnu.2004.06.004); FFMI/FMI da Coin et al.,
+          (DOI: 10.1016/j.clnu.2023.03.006); FFM da equazione diretta di Sun et al. 2003 (stessa fonte del TBW, Tabella 5 —
+          non più derivata da TBW/costante di idratazione); FFMI/FMI da Coin et al.,
           <em>Clin Nutr</em> 2008 (PMID 18206273, popolazione italiana).</>
         )}
         {" "}Software diversi (incluso il tuo dispositivo) possono dare numeri leggermente diversi a parità di R/Xc: è un limite noto
