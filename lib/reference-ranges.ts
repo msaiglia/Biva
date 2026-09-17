@@ -10,9 +10,12 @@
  * FFMI, FMI — Coin A, Sergi G, Minicuci N, et al. "Fat-free mass and fat
  * mass reference values by dual-energy X-ray absorptiometry (DEXA) in a
  * 20-80 year-old Italian population." Clin Nutr. 2008;27:87-94.
- * PMID: 18206273 — popolazione italiana, 1866 adulti sani.
- * FFMI: range 25°-75° percentile stabile a tutte le età.
- * FMI: varia con l'età, qui semplificato a 2 fasce (< 50 anni, ≥ 50 anni)
+ * DOI: 10.1016/j.clnu.2007.10.008. PMID: 18206273 — popolazione italiana,
+ * 1866 adulti sani (1435 donne, 431 uomini). Verificato sul PDF originale
+ * (non solo su fonte secondaria) in questa sessione.
+ * FFMI: range 25°-75° percentile stabile a tutte le età (Tabella 2).
+ * FMI: varia sensibilmente con l'età — 6 fasce decennali esatte da
+ * Tabella 4 (non più una semplificazione a 2 fasce)
  * usando i dati riportati per le fasce 20-29 e 60-69/70-80.
  *
  * TBW% — range fisiologico generale (non uno specifico studio
@@ -58,22 +61,43 @@ export function ffmiRange(sex: Sex): RangeZones {
     normalHigh,
     highBoundary: normalHigh + span * 0.4,
     max: normalHigh + span * 1.2,
-    sourceLabel: "Coin et al. 2008 (PMID 18206273) — popolazione italiana, 25°-75° percentile",
+    sourceLabel: "Coin et al. 2008 (PMID 18206273) — popolazione italiana N=1866, 25°-75° percentile, stabile a tutte le età (Tabella 2, verificato su fonte primaria)",
   };
 }
 
-/** FMI (kg/m²) — varia con l'età, semplificato a 2 fasce (Coin et al. 2008). */
+/** FMI (kg/m²) — varia sensibilmente con l'età (Coin et al. 2008, Tabella 4): 6 fasce decennali, non 2. */
+/**
+ * Fasce d'età FMI (25°-75° percentile) — Tabella 4, Coin et al. 2008.
+ * A differenza della FFMI (stabile a tutte le età secondo gli stessi
+ * autori), la FMI varia sensibilmente per decade: usare solo 2 fasce
+ * (<50/≥50) sarebbe una semplificazione eccessiva rispetto alla fonte —
+ * qui si usano le 6 fasce esatte riportate nello studio primario
+ * (verificato sul PDF originale, non su una fonte secondaria).
+ */
+const FMI_BRACKETS_M: { maxAge: number; low: number; high: number }[] = [
+  { maxAge: 29, low: 2.9, high: 4.8 },
+  { maxAge: 39, low: 3.8, high: 6.0 },
+  { maxAge: 49, low: 4.3, high: 7.2 },
+  { maxAge: 59, low: 5.0, high: 7.4 },
+  { maxAge: 69, low: 5.8, high: 8.5 },
+  { maxAge: Infinity, low: 5.6, high: 8.6 }, // 70-80
+];
+const FMI_BRACKETS_F: { maxAge: number; low: number; high: number }[] = [
+  { maxAge: 29, low: 4.9, high: 8.2 },
+  { maxAge: 39, low: 6.1, high: 9.3 },
+  { maxAge: 49, low: 5.9, high: 9.7 },
+  { maxAge: 59, low: 6.9, high: 10.5 },
+  { maxAge: 69, low: 8.0, high: 11.5 },
+  { maxAge: Infinity, low: 7.7, high: 11.3 }, // 70-80
+];
+
 export function fmiRange(sex: Sex, ageYears: number): RangeZones {
-  const young = ageYears < 50;
-  let normalLow: number, normalHigh: number;
-  if (sex === "M") {
-    normalLow = young ? 2.9 : 5.6;
-    normalHigh = young ? 4.8 : 8.6;
-  } else {
-    // Donne: range approssimato dagli stessi bracket d'età riportati nello studio
-    normalLow = young ? 3.7 : 7.0;
-    normalHigh = young ? 6.0 : 10.5;
-  }
+  const brackets = sex === "M" ? FMI_BRACKETS_M : FMI_BRACKETS_F;
+  const bracket = brackets.find((b) => ageYears <= b.maxAge) ?? brackets[brackets.length - 1];
+  const normalLow = bracket.low;
+  const normalHigh = bracket.high;
+  const ageLabel =
+    bracket.maxAge === Infinity ? "70-80" : `${bracket.maxAge - 9}-${bracket.maxAge}`;
   const span = normalHigh - normalLow;
   return {
     min: Math.max(0, normalLow - span * 1.2),
@@ -82,7 +106,7 @@ export function fmiRange(sex: Sex, ageYears: number): RangeZones {
     normalHigh,
     highBoundary: normalHigh + span * 0.4,
     max: normalHigh + span * 1.2,
-    sourceLabel: `Coin et al. 2008 (PMID 18206273) — fascia ${young ? "<50" : "≥50"} anni, 25°-75° percentile`,
+    sourceLabel: `Coin et al. 2008 (PMID 18206273) — fascia ${ageLabel} anni, 25°-75° percentile (Tabella 4, verificato su fonte primaria)`,
   };
 }
 
