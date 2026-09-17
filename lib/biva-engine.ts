@@ -264,34 +264,29 @@ export function computeBodyComposition(
       ? 1.203 + 0.449 * ht2R + 0.176 * weightKg
       : 3.747 + 0.45 * ht2R + 0.113 * weightKg;
 
-  const bmi = weightKg / ((heightCm / 100) * (heightCm / 100));
-
-  // FFM — Costa RF, Masset KVSB, Silva AM, Ferrari G, Cabral BGAT, Dantas
-  // PMS. "Development and cross-validation of predictive equations for
-  // fat-free mass estimation by bioelectrical impedance analysis in
-  // Brazilian subjects with overweight and obesity." Front Nutr.
+  // FFM — TBW/0.73 (costante di idratazione ESPEN) per tutte le fasce di BMI.
+  //
+  // NOTA STORICA: in una versione precedente, per BMI≥25 veniva usata
+  // un'equazione specifica per sovrappeso/obesità — Costa RF, Masset KVSB,
+  // Silva AM, et al. "Development and cross-validation of predictive
+  // equations for fat-free mass estimation by bioelectrical impedance
+  // analysis in Brazilian subjects with overweight and obesity." Front Nutr.
   // 2025;12:1499752. DOI: 10.3389/fnut.2025.1499752 — validata contro DXA,
-  // N=269, età 18-79. Kyle et al. 2001 (Caucasici) applicata a questo stesso
-  // campione ha fallito la validazione (sovrastima significativa, p<0.001),
-  // a conferma che serve un'equazione specifica per BMI elevato.
-  // Limite dichiarato: popolazione brasiliana (forte meticciato etnico), non
-  // italiana — comunque preferibile a un'equazione generalista fuori target.
-  // In queste equazioni il sesso è invertito rispetto al resto di questo
-  // file: donna=1, uomo=0.
-  const HYDRATION_CONSTANT = 0.73; // ESPEN: idratazione media della FFM negli adulti sani (usata solo per BMI<25)
-  let ffmKg: number;
-  if (bmi >= 30) {
-    // Equazione 2 (obesità), R²=0.94/0.95 cross-val, SEE=2.53/2.25 kg
-    const sexF = sex === "F" ? 1 : 0;
-    ffmKg = -0.058 + 0.463 * ht2R + 0.278 * weightKg - 5.15 * sexF + 0.115 * Xc - 0.049 * ageYears;
-  } else if (bmi >= 25) {
-    // Equazione 1 (sovrappeso/obesità), R²=0.96 cross-val, SEE=2.04 kg
-    const sexF = sex === "F" ? 1 : 0;
-    const phaseAngle = phaseAngleDeg(R, Xc);
-    ffmKg = -8.395 + 0.34 * ht2R - 5.76 * sexF + 0.222 * weightKg - 0.041 * ageYears + 0.138 * heightCm + 0.7 * phaseAngle;
-  } else {
-    ffmKg = tbwL / HYDRATION_CONSTANT;
-  }
+  // N=269. Equazione di per sé valida e correttamente citata, ma RITIRATA
+  // dopo validazione empirica contro 6 referti Akern reali con BMI≥25
+  // (entrambe le fasce 25-29.9 e ≥30): in 5 casi su 6 la vecchia TBW/0.73
+  // risultava più vicina al valore Akern (scarti da 0.1 a 5.2kg a favore
+  // della formula semplice). Ipotesi più probabile: mismatch etnico (il
+  // campione di sviluppo Costa 2025 è brasiliano, con forte meticciato
+  // dichiarato dagli stessi autori) più che un difetto dell'equazione in
+  // sé — ma su questa popolazione (pazienti sardi) e questo dispositivo
+  // (Akern), la formula generalista si comporta meglio in pratica.
+  // Akern non è un gold standard (è un algoritmo proprietario non
+  // pubblicato), quindi questo non dimostra che Costa 2025 sia "sbagliata"
+  // in assoluto — ma il pattern era troppo consistente (6/6 stessa
+  // direzione) per continuare a usarla qui.
+  const HYDRATION_CONSTANT = 0.73; // ESPEN: idratazione media della FFM negli adulti sani
+  const ffmKg = tbwL / HYDRATION_CONSTANT;
   const fmKg = weightKg - ffmKg;
 
   // ECW individualizzata — Lukaski HC, Bolonchuk WW. "Estimation of body
