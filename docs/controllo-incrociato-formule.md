@@ -96,8 +96,8 @@ Classificazione: sottopeso <18.5, normopeso 18.5–24.9, sovrappeso 25–29.9, o
 
 | Parametro | Range "normale" (25°-75° percentile o ±1 SEE) | Fonte |
 |---|---|---|
-| **FFMI** (kg/m²) | Uomini 18.7–21.0 · Donne 14.9–17.2, stabile a tutte le età | Coin A, et al. *Clin Nutr.* 2008;27:87-94. PMID 18206273. Popolazione italiana N=1866 |
-| **FMI** (kg/m²) | Uomini: <50a 2.9–4.8, ≥50a 5.6–8.6 · Donne: <50a 3.7–6.0, ≥50a 7.0–10.5 | Idem, stratificato per età |
+| **FFMI** (kg/m²) | Uomini 18.7–21.0 · Donne 14.9–17.2, stabile a tutte le età | Coin A, et al. *Clin Nutr.* 2008;27:87-94. DOI: 10.1016/j.clnu.2007.10.008. PMID 18206273. Popolazione italiana N=1866 |
+| **FMI** (kg/m²) | 6 fasce decennali esatte (Tabella 4) — Uomini: 20-29 2.9–4.8 · 30-39 3.8–6.0 · 40-49 4.3–7.2 · 50-59 5.0–7.4 · 60-69 5.8–8.5 · 70-80 5.6–8.6. Donne: 20-29 4.9–8.2 · 30-39 6.1–9.3 · 40-49 5.9–9.7 · 50-59 6.9–10.5 · 60-69 8.0–11.5 · 70-80 7.7–11.3 | Idem, Tabella 4 |
 | **TBW** (% peso) | 45–65% (fascia "normale"), 35–75% limiti esterni | Range fisiologico generale, non percentili di uno studio specifico |
 | **ECW/TBW%** | Valore atteso individualizzato età+sesso+BMI ±1 SEE (±1.06 uomini, ±1.46 donne) | Enderle J, et al. *Clin Nutr.* 2023;42:644-652. DOI: 10.1016/j.clnu.2023.03.006. N=1958 adulti caucasici 18-97 anni, Tabella 2 (modello BMI-dipendente) |
 | **ICW/TBW%** | Complemento matematico: `100% − ECW/TBW% atteso`, stesso SEE | Stessa fonte di sopra — non è una fonte separata, è un'identità (TBW=ECW+ICW) |
@@ -120,6 +120,8 @@ Donne:  -0.0960×età + 0.002088×età² + 0.1119×BMI + 42.00
 
 Un blocco di commento in `lib/biva-engine.ts` (righe 219-227 prima della correzione) descriveva ancora il **vecchio metodo** ECW/ICW a rapporto fisso 40%/60% (Moissl et al. 2006), sostituito nel codice funzionante da Lukaski & Bolonchuk 1988 individualizzato in una sessione precedente. Il codice era corretto, solo il commento era rimasto disallineato — corretto nel commit `13297e5`. Nessun impatto sui calcoli o sui referti già generati.
 
+**Seconda incongruenza (commit `c729961`)**: la fascia FMI (Coin et al. 2008) era implementata come una semplificazione a 2 sole fasce d'età (<50/≥50 anni), usando solo i valori delle fasce estreme (20-29 e 70-80) citati nel testo della discussione del paper. Verificando la Tabella 4 originale (PDF fornito dall'utente), le fasce intermedie sono sensibilmente diverse (es. uomini 40-49: 4.3–7.2, non 2.9–4.8 come usato per "tutti gli under-50"), e i valori usati per le donne **non corrispondevano a nessuna fascia della tabella originale** — probabilmente un valore approssimato in una sessione precedente, mai verificato sulla fonte primaria fino ad ora. Corretto con le 6 fasce decennali esatte. Impatto pratico: pazienti nelle fasce 30-49 e 50-69 anni (di entrambi i sessi) potevano ricevere una fascia colorata FMI leggermente scorretta prima di questa correzione — la FFMI non era interessata (confermata stabile a tutte le età dagli stessi autori).
+
 ---
 
 ## 7. Tabella riassuntiva delle fonti
@@ -134,7 +136,7 @@ Un blocco di commento in `lib/biva-engine.ts` (righe 219-227 prima della correzi
 | Lukaski & Bolonchuk 1988 | Aviat Space Environ Med | — (paywall) | **2 fonti secondarie indipendenti concordanti** (Matias 2016 Tab.1, Siconolfi 1997 testo) — PDF di Siconolfi fornito dall'utente |
 | Dittmar & Reber 2001 | Am J Physiol Endocrinol Metab | — | Citata in ESPEN 2004; testata contro 2 referti Akern reali (risultati disomogenei, limite dichiarato) |
 | Matias et al. 2016 | Clin Nutr | 10.1016/j.clnu.2015.03.013 | **PDF fornito dall'utente**, verificato numericamente contro 2 worked examples |
-| Coin et al. 2008 | Clin Nutr | PMID 18206273 | Verificato in sessione precedente (da cronologia progetto) |
+| Coin et al. 2008 | Clin Nutr | DOI 10.1016/j.clnu.2007.10.008, PMID 18206273 | **PDF fornito dall'utente**, verificato riga per riga su Tabelle 2 e 4 — FFMI confermata esatta, **FMI corretta**: la vecchia approssimazione a 2 fasce (<50/≥50) non rifletteva le 6 fasce decennali reali, specie per la fascia 40-59 e per i valori femminili (non corrispondevano affatto alla tabella originale) |
 | WHO TRS 894, 2000 | — | — | Classificazione standard internazionale, nota |
 | Enderle et al. 2023 | Clin Nutr | 10.1016/j.clnu.2023.03.006 | **PDF fornito dall'utente**, verificato numericamente contro Fig.1 e identità matematica |
 | Kampo, Závodná & Vondra 2025 | Physiol Res | PMID 41511100 | Citata per confermare un gap (assenza di range BCM), non per fornire una formula |
