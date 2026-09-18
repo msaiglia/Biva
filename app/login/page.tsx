@@ -11,6 +11,7 @@ function LoginInner() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -57,13 +58,35 @@ function LoginInner() {
         </div>
         <div style={{ marginBottom: 14 }}>
           <label style={{ display: "block", fontSize: 12, color: "#5a564c", marginBottom: 4 }}>Password</label>
-          <input
-            type="password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={inputStyle}
-          />
+          <div style={{ position: "relative" }}>
+            <input
+              type={showPassword ? "text" : "password"}
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              style={{ ...inputStyle, paddingRight: 60 }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              aria-label={showPassword ? "Nascondi password" : "Mostra password"}
+              style={{
+                position: "absolute",
+                right: 8,
+                top: "50%",
+                transform: "translateY(-50%)",
+                background: "none",
+                border: "none",
+                color: "#8a8578",
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: "pointer",
+                padding: "4px 6px",
+              }}
+            >
+              {showPassword ? "Nascondi" : "Mostra"}
+            </button>
+          </div>
         </div>
         {error && <div style={{ fontSize: 13, color: "#b23a3a", marginBottom: 14 }}>{error}</div>}
         <button type="submit" disabled={loading} style={buttonStyle}>
